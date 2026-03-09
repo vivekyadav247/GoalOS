@@ -1,4 +1,5 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useUser } from '@clerk/react';
 import {
   Bar,
   BarChart,
@@ -16,19 +17,10 @@ import TaskItem from '../components/TaskItem';
 import GoalCard from '../components/GoalCard';
 import CreateGoalModal from '../components/CreateGoalModal';
 import CreateTaskModal from '../components/CreateTaskModal';
-import { getApiErrorMessage, getAuthUser, goalApi, taskApi } from '../services/api';
+import { getApiErrorMessage, goalApi, taskApi } from '../services/api';
 import usePlannerData from '../hooks/usePlannerData';
 
 const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-const normalizeDay = (value) => {
-  if (!value) {
-    return '';
-  }
-  const normalized = String(value).trim().toLowerCase();
-  const matched = weekdays.find((day) => day.toLowerCase() === normalized);
-  return matched || '';
-};
 
 const computeProgress = (tasks = []) => {
   if (!tasks.length) {
@@ -39,19 +31,8 @@ const computeProgress = (tasks = []) => {
 };
 
 const Dashboard = () => {
-  const user = getAuthUser();
-  const {
-    goals,
-    months,
-    weeks,
-    tasks,
-    tasksByWeek,
-    weekToMonth,
-    monthToGoal,
-    loading,
-    error,
-    refresh
-  } = usePlannerData();
+  const { user } = useUser();
+  const { goals, tasks, loading, error, refresh } = usePlannerData();
 
   const [busyTaskId, setBusyTaskId] = useState('');
   const [modalError, setModalError] = useState('');
@@ -70,11 +51,8 @@ const Dashboard = () => {
     const byGoal = {};
 
     for (const task of tasks) {
-      const monthId = weekToMonth[task.weekId];
-      const goalId = monthToGoal[monthId];
-      if (!goalId) {
-        continue;
-      }
+      const goalId = task.goalId;
+      if (!goalId) continue;
 
       if (!byGoal[goalId]) {
         byGoal[goalId] = { total: 0, completed: 0 };
@@ -87,7 +65,7 @@ const Dashboard = () => {
     }
 
     return byGoal;
-  }, [tasks, weekToMonth, monthToGoal]);
+  }, [tasks]);
 
   const summary = useMemo(() => {
     const completedTasks = tasks.filter((task) => task.completed).length;
@@ -113,53 +91,69 @@ const Dashboard = () => {
     });
   }, [goals, goalStats]);
 
-  const todayName = useMemo(
-    () => new Date().toLocaleDateString(undefined, { weekday: 'long' }),
-    []
+  const goalOptions = useMemo(
+    () =>
+      goals.map((goal) => ({
+        value: goal._id,
+        label: goal.title
+      })),
+    [goals]
   );
 
   const todaysTasks = useMemo(() => {
-    const dayName = normalizeDay(todayName);
-    const exactMatches = tasks.filter((task) => normalizeDay(task.day) === dayName);
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
-    if (exactMatches.length > 0) {
-      return exactMatches;
-    }
-
-    return [...tasks]
-      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-      .slice(0, 8);
-  }, [tasks, todayName]);
+    return tasks
+      .filter((task) => {
+        const date = new Date(task.date);
+        return date >= start && date < end;
+      })
+      .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+  }, [tasks]);
 
   const dailyData = useMemo(
     () =>
       weekdays.map((day) => ({
         label: day.slice(0, 3),
-        value: tasks.filter((task) => task.completed && normalizeDay(task.day) === day).length
+        value: tasks.filter((task) => {
+          if (!task.completed || !task.date) return false;
+          const taskDate = new Date(task.date);
+          const weekday = weekdays[taskDate.getDay() === 0 ? 6 : taskDate.getDay() - 1];
+          return weekday === day;
+        }).length
       })),
     [tasks]
   );
 
   const weeklyData = useMemo(() => {
-    return [...weeks]
-      .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))
+    const buckets = new Map();
+
+    for (const task of tasks) {
+      if (!task.date) continue;
+      const date = new Date(task.date);
+      const year = date.getFullYear();
+      const weekStart = new Date(year, date.getMonth(), date.getDate());
+      const day = weekStart.getDay() || 7;
+      weekStart.setDate(weekStart.getDate() - (day - 1));
+      weekStart.setHours(0, 0, 0, 0);
+      const key = weekStart.toISOString().slice(0, 10);
+
+      if (!buckets.has(key)) {
+        buckets.set(key, []);
+      }
+      buckets.get(key).push(task);
+    }
+
+    return Array.from(buckets.entries())
+      .sort((a, b) => new Date(a[0]) - new Date(b[0]))
       .slice(-8)
-      .map((week) => ({
-        label: `W${week.weekNumber}`,
-        value: computeProgress(tasksByWeek[week._id] || [])
+      .map(([key, weekTasks]) => ({
+        label: `W${key.slice(5)}`,
+        value: computeProgress(weekTasks)
       }));
-  }, [weeks, tasksByWeek]);
-
-  const weekOptions = useMemo(() => {
-    const monthMap = Object.fromEntries(months.map((month) => [month._id, month.monthName]));
-
-    return [...weeks]
-      .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))
-      .map((week) => ({
-        value: week._id,
-        label: `${monthMap[week.monthId] || 'Month'} • Week ${week.weekNumber}`
-      }));
-  }, [months, weeks]);
+  }, [tasks]);
 
   const handleToggleTask = async (task) => {
     setBusyTaskId(task._id);
@@ -195,7 +189,14 @@ const Dashboard = () => {
     setModalError('');
 
     try {
-      await taskApi.create(payload);
+      if (!payload.goalId) {
+        throw new Error('Select a goal before creating a task');
+      }
+      await taskApi.create({
+        goalId: payload.goalId,
+        title: payload.title,
+        date: payload.date
+      });
       setTaskModalOpen(false);
       await refresh();
     } catch (err) {
@@ -210,13 +211,25 @@ const Dashboard = () => {
       <section className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="page-title">
-            {greeting}, <span className="text-blue-700">{user?.name || 'Planner'}</span>
+            {greeting},{' '}
+            <span className="text-blue-700">
+              {user?.firstName || user?.username || 'Planner'}
+            </span>
           </h2>
           <p className="page-subtitle">Track outcomes, tasks, and momentum across your planning cycle.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button className="btn-secondary" onClick={() => setTaskModalOpen(true)}>
+          <button
+            className="btn-secondary"
+            onClick={() => {
+              if (goals.length === 0) {
+                setModalError('Create a goal first, then add tasks.');
+                return;
+              }
+              setTaskModalOpen(true);
+            }}
+          >
             New Task
           </button>
           <button className="btn-primary" onClick={() => setGoalModalOpen(true)}>
@@ -288,7 +301,14 @@ const Dashboard = () => {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <GraphCard title="Today's tasks" subtitle={`${todayName} task list`}>
+        <GraphCard
+          title="Today's tasks"
+          subtitle={new Date().toLocaleDateString(undefined, {
+            weekday: 'long',
+            month: 'short',
+            day: 'numeric'
+          })}
+        >
           <div className="space-y-2">
             {loading ? (
               <p className="text-sm text-slate-500">Loading tasks...</p>
@@ -345,7 +365,8 @@ const Dashboard = () => {
       <CreateTaskModal
         open={taskModalOpen}
         loading={modalLoading}
-        weekOptions={weekOptions}
+        goalOptions={goalOptions}
+        requireGoal
         onClose={() => setTaskModalOpen(false)}
         onSubmit={handleCreateTask}
       />
@@ -354,4 +375,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

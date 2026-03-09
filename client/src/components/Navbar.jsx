@@ -1,6 +1,6 @@
-﻿import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { Show, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/react';
 import { PAGE_TITLES } from './navigation';
-import { clearAuthSession, getAuthUser } from '../services/api';
 
 const resolveTitle = (pathname) => {
   if (pathname.startsWith('/goals/')) {
@@ -11,14 +11,8 @@ const resolveTitle = (pathname) => {
 };
 
 const Navbar = () => {
-  const navigate = useNavigate();
   const location = useLocation();
-  const user = getAuthUser();
-
-  const handleLogout = () => {
-    clearAuthSession();
-    navigate('/login', { replace: true });
-  };
+  const { user } = useUser();
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/85 backdrop-blur">
@@ -38,12 +32,38 @@ const Navbar = () => {
           <div className="hidden rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500 md:block">
             Search
           </div>
-          <button onClick={handleLogout} className="btn-secondary px-3 py-2 text-xs sm:text-sm">
-            Log out
-          </button>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-xs font-semibold text-white">
-            {(user?.name || 'G').slice(0, 1).toUpperCase()}
-          </div>
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <button type="button" className="btn-secondary px-3 py-2 text-xs sm:text-sm">
+                Sign in
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button
+                type="button"
+                className="hidden rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:inline-flex"
+              >
+                Get started
+              </button>
+            </SignUpButton>
+          </Show>
+          <Show when="signed-in">
+            <UserButton
+              afterSignOutUrl="/"
+              userProfileMode="navigation"
+              userProfileUrl="/profile"
+            >
+              <UserButton.MenuItems>
+                <UserButton.Action label="manageAccount" />
+                <UserButton.Action label="signOut" />
+              </UserButton.MenuItems>
+            </UserButton>
+          </Show>
+          {!user && (
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-xs font-semibold text-white">
+              G
+            </div>
+          )}
         </div>
       </div>
     </header>
@@ -51,4 +71,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-

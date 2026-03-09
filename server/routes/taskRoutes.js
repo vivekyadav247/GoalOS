@@ -1,18 +1,19 @@
 const express = require('express');
 const {
   createTask,
-  getTasksByWeek,
+  getTasksByGoal,
+  getTodayTasks,
+  getAllTasks,
   updateTask,
   deleteTask,
 } = require('../controllers/taskController');
-const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router.use(authMiddleware);
-
 router.post('/', createTask);
-router.get('/:weekId', getTasksByWeek);
+router.get('/', getAllTasks);
+router.get('/today', getTodayTasks);
+router.get('/goal/:goalId', getTasksByGoal);
 router.put('/:id', updateTask);
 router.delete('/:id', deleteTask);
 

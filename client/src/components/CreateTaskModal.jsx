@@ -1,28 +1,22 @@
 import { useEffect, useState } from 'react';
-import Dropdown from './Dropdown';
-
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' }
-];
 
 const defaultForm = {
-  weekId: '',
   title: '',
-  day: DAYS[0],
-  category: '',
-  priority: 'medium'
+  date: '',
+  goalId: ''
 };
+
+const EMPTY_GOAL_OPTIONS = [];
+
+const isSameForm = (a, b) =>
+  a.title === b.title && a.date === b.date && a.goalId === b.goalId;
 
 const CreateTaskModal = ({
   open,
   loading = false,
   initialValue = null,
-  weekOptions = [],
-  lockWeek = false,
-  defaultWeekId = '',
+  goalOptions = EMPTY_GOAL_OPTIONS,
+  requireGoal = false,
   onClose,
   onSubmit
 }) => {
@@ -34,21 +28,21 @@ const CreateTaskModal = ({
     }
 
     if (initialValue) {
-      setForm({
-        weekId: initialValue.weekId || defaultWeekId || weekOptions[0]?.value || '',
+      const nextForm = {
         title: initialValue.title || '',
-        day: initialValue.day || DAYS[0],
-        category: initialValue.category || '',
-        priority: initialValue.priority || 'medium'
-      });
+        date: initialValue.date ? String(initialValue.date).slice(0, 10) : '',
+        goalId: initialValue.goalId || ''
+      };
+      setForm((prev) => (isSameForm(prev, nextForm) ? prev : nextForm));
       return;
     }
 
-    setForm({
+    const nextForm = {
       ...defaultForm,
-      weekId: defaultWeekId || weekOptions[0]?.value || ''
-    });
-  }, [open, initialValue, defaultWeekId, weekOptions]);
+      goalId: goalOptions[0]?.value || ''
+    };
+    setForm((prev) => (isSameForm(prev, nextForm) ? prev : nextForm));
+  }, [open, initialValue, goalOptions]);
 
   if (!open) {
     return null;
@@ -62,11 +56,9 @@ const CreateTaskModal = ({
   const handleSubmit = (event) => {
     event.preventDefault();
     onSubmit({
-      weekId: form.weekId,
       title: form.title.trim(),
-      day: form.day,
-      category: form.category.trim(),
-      priority: form.priority
+      date: form.date || null,
+      goalId: form.goalId || ''
     });
   };
 
@@ -78,7 +70,7 @@ const CreateTaskModal = ({
             <h3 className="text-lg font-semibold text-slate-900">
               {initialValue ? 'Edit Task' : 'Create Task'}
             </h3>
-            <p className="mt-1 text-sm text-slate-500">Assign the task to a week and day.</p>
+            <p className="mt-1 text-sm text-slate-500">Assign the task to a goal and date.</p>
           </div>
           <button type="button" onClick={onClose} className="btn-secondary px-2.5 py-1.5 text-xs">
             Close
@@ -86,23 +78,6 @@ const CreateTaskModal = ({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          <Dropdown
-            label="Week"
-            value={form.weekId}
-            onChange={(nextValue) => setForm((prev) => ({ ...prev, weekId: nextValue }))}
-            options={
-              weekOptions.length === 0
-                ? []
-                : weekOptions.map((week) => ({
-                    value: week.value,
-                    label: week.label
-                  }))
-            }
-            placeholder={weekOptions.length === 0 ? 'No weeks available' : 'Select week'}
-            className="w-full"
-            buttonClassName={lockWeek ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}
-          />
-
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-600">Task title</label>
             <input
@@ -115,37 +90,37 @@ const CreateTaskModal = ({
             />
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Dropdown
-              label="Day"
-              value={form.day}
-              onChange={(nextValue) => setForm((prev) => ({ ...prev, day: nextValue }))}
-              options={DAYS.map((day) => ({
-                value: day,
-                label: day
-              }))}
-              className="w-full"
-            />
-
+          {goalOptions.length > 0 ? (
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Category</label>
-              <input
+              <label className="mb-1 block text-xs font-medium text-slate-600">Goal</label>
+              <select
                 className="input-base"
-                name="category"
-                value={form.category}
+                name="goalId"
+                value={form.goalId}
                 onChange={handleChange}
-                placeholder="Category"
-              />
+                required={requireGoal}
+              >
+                {!requireGoal ? <option value="">No goal selected</option> : null}
+                {goalOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
-          </div>
+          ) : null}
 
-          <Dropdown
-            label="Priority"
-            value={form.priority}
-            onChange={(nextValue) => setForm((prev) => ({ ...prev, priority: nextValue }))}
-            options={PRIORITY_OPTIONS}
-            className="w-full"
-          />
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">Date</label>
+            <input
+              className="input-base"
+              type="date"
+              name="date"
+              value={form.date}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
           <div className="flex items-center justify-end gap-2 pt-1">
             <button type="button" onClick={onClose} className="btn-secondary">
@@ -162,4 +137,3 @@ const CreateTaskModal = ({
 };
 
 export default CreateTaskModal;
-

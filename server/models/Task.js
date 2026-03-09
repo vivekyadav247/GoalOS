@@ -2,9 +2,14 @@ const mongoose = require('mongoose');
 
 const taskSchema = new mongoose.Schema(
   {
-    weekId: {
+    clerkId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    goalId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'WeekPlan',
+      ref: 'Goal',
       required: true,
       index: true,
     },
@@ -13,20 +18,10 @@ const taskSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    day: {
-      type: String,
+    date: {
+      type: Date,
       required: true,
-      trim: true,
-    },
-    category: {
-      type: String,
-      trim: true,
-    },
-    priority: {
-      type: String,
-      enum: ['low', 'medium', 'high'],
-      default: 'medium',
-      trim: true,
+      index: true,
     },
     completed: {
       type: Boolean,

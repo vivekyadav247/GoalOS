@@ -1,4 +1,4 @@
-﻿import { useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   Bar,
   BarChart,
@@ -21,60 +21,71 @@ import usePlannerData from '../hooks/usePlannerData';
 
 const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-const normalizeDay = (value) => {
-  if (!value) {
-    return '';
-  }
-  const normalized = String(value).trim().toLowerCase();
-  const matched = weekdays.find((day) => day.toLowerCase() === normalized);
-  return matched || '';
+const startOfWeek = (date) => {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = d.getDay() || 7;
+  d.setDate(d.getDate() - (day - 1));
+  d.setHours(0, 0, 0, 0);
+  return d;
 };
 
-const progressFromTasks = (tasks = []) => {
-  if (!tasks.length) {
-    return 0;
-  }
-  const completed = tasks.filter((task) => task.completed).length;
-  return Math.round((completed / tasks.length) * 100);
-};
+const monthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
 const Analytics = () => {
-  const {
-    goals,
-    months,
-    weeks,
-    tasks,
-    tasksByWeek,
-    weekToMonth,
-    monthToGoal,
-    loading,
-    error
-  } = usePlannerData();
+  const { goals, tasks, loading, error } = usePlannerData();
 
   const dailyData = useMemo(
     () =>
       weekdays.map((day) => ({
         day: day.slice(0, 3),
-        value: tasks.filter((task) => task.completed && normalizeDay(task.day) === day).length
+        value: tasks.filter((task) => {
+          if (!task.completed || !task.date) return false;
+          const d = new Date(task.date);
+          const label = weekdays[d.getDay() === 0 ? 6 : d.getDay() - 1];
+          return label === day;
+        }).length
       })),
     [tasks]
   );
 
   const weeklyData = useMemo(() => {
-    return [...weeks]
-      .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))
+    const buckets = new Map();
+    for (const task of tasks) {
+      if (!task.date) continue;
+      const d = new Date(task.date);
+      const key = startOfWeek(d).toISOString().slice(0, 10);
+      if (!buckets.has(key)) {
+        buckets.set(key, []);
+      }
+      buckets.get(key).push(task);
+    }
+
+    return Array.from(buckets.entries())
+      .sort((a, b) => new Date(a[0]) - new Date(b[0]))
       .slice(-10)
-      .map((week) => ({
-        label: `W${week.weekNumber}`,
-        value: progressFromTasks(tasksByWeek[week._id] || [])
-      }));
-  }, [weeks, tasksByWeek]);
+      .map(([key, weekTasks]) => {
+        const completed = weekTasks.filter((task) => task.completed).length;
+        const progress = weekTasks.length ? Math.round((completed / weekTasks.length) * 100) : 0;
+        return {
+          label: `W ${key.slice(5)}`,
+          value: progress
+        };
+      });
+  }, [tasks]);
+
+  const goalMap = useMemo(
+    () =>
+      Object.fromEntries(
+        goals.map((goal) => [goal._id, goal.title])
+      ),
+    [goals]
+  );
 
   const categoryData = useMemo(() => {
     const grouped = {};
 
     for (const task of tasks) {
-      const key = task.category?.trim() || 'General';
+      const key = goalMap[task.goalId] || 'General';
       if (!grouped[key]) {
         grouped[key] = { total: 0, completed: 0 };
       }
@@ -91,14 +102,13 @@ const Analytics = () => {
       }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 6);
-  }, [tasks]);
+  }, [goalMap, tasks]);
 
   const goalProgressData = useMemo(() => {
     const grouped = {};
 
     for (const task of tasks) {
-      const monthId = weekToMonth[task.weekId];
-      const goalId = monthToGoal[monthId];
+      const goalId = task.goalId;
       if (!goalId) {
         continue;
       }
@@ -123,7 +133,7 @@ const Analytics = () => {
       })
       .sort((a, b) => b.progress - a.progress)
       .slice(0, 8);
-  }, [goals, tasks, weekToMonth, monthToGoal]);
+  }, [goals, tasks]);
 
   const completionSummary = useMemo(() => {
     const completed = tasks.filter((task) => task.completed).length;
@@ -131,19 +141,36 @@ const Analytics = () => {
     return total ? Math.round((completed / total) * 100) : 0;
   }, [tasks]);
 
+  const monthCount = useMemo(() => {
+    const keys = new Set();
+    for (const goal of goals) {
+      if (goal.startDate) {
+        keys.add(monthKey(new Date(goal.startDate)));
+      }
+      if (goal.endDate) {
+        keys.add(monthKey(new Date(goal.endDate)));
+      }
+    }
+    for (const task of tasks) {
+      if (!task.date) continue;
+      keys.add(monthKey(new Date(task.date)));
+    }
+    return keys.size;
+  }, [goals, tasks]);
+
   return (
     <div className="space-y-6">
       <section>
         <h2 className="page-title">Analytics</h2>
-        <p className="page-subtitle">Track productivity trends and category balance from live backend data.</p>
+        <p className="page-subtitle">Track productivity trends and execution performance from live backend data.</p>
       </section>
 
       {error ? <div className="surface-card p-4 text-sm text-rose-700">{error}</div> : null}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <ProgressCard title="Total Goals" value={goals.length} subtitle="Goals in workspace" tone="blue" />
-        <ProgressCard title="Months Planned" value={months.length} subtitle="Monthly breakdowns" tone="slate" />
-        <ProgressCard title="Weeks Planned" value={weeks.length} subtitle="Weekly execution units" tone="amber" />
+        <ProgressCard title="Months Planned" value={monthCount} subtitle="Months touched by plans" tone="slate" />
+        <ProgressCard title="Task Weeks" value={weeklyData.length} subtitle="Active execution weeks" tone="amber" />
         <ProgressCard title="Completion" value={`${completionSummary}%`} subtitle="Overall completed tasks" tone="emerald" />
       </section>
 
@@ -170,14 +197,20 @@ const Analytics = () => {
                 <XAxis dataKey="label" stroke="#64748b" />
                 <YAxis stroke="#64748b" domain={[0, 100]} />
                 <Tooltip />
-                <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2.5} dot={{ r: 4, fill: '#10b981' }} />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#10b981"
+                  strokeWidth={2.5}
+                  dot={{ r: 4, fill: '#10b981' }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </GraphCard>
 
-          <GraphCard title="Monthly category radar" subtitle="Completion percentage by category" className="h-[360px]">
+          <GraphCard title="Goal performance radar" subtitle="Completion percentage by goal" className="h-[360px]">
             {categoryData.length === 0 ? (
-              <p className="text-sm text-slate-500">No category data yet.</p>
+              <p className="text-sm text-slate-500">No data yet.</p>
             ) : (
               <ResponsiveContainer width="100%" height="88%">
                 <RadarChart data={categoryData}>
@@ -220,4 +253,3 @@ const Analytics = () => {
 };
 
 export default Analytics;
-

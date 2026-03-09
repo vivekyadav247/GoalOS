@@ -8,7 +8,6 @@ const connectDB = async () => {
         // useNewUrlParser, useUnifiedTopology etc. are no longer needed in Mongoose 6+
       },
     );
-    console.log(`MongoDB connected: ${conn.connection.host}`);
   } catch (error) {
     console.error("MongoDB connection error:", error.message);
     process.exit(1);

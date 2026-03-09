@@ -1,27 +1,45 @@
+const mongoose = require('mongoose');
 const Task = require('../models/Task');
-const WeekPlan = require('../models/WeekPlan');
-const { updateWeekProgressFromTasks } = require('./weekController');
+const Goal = require('../models/Goal');
+
+const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
 
 // POST /api/tasks
 const createTask = async (req, res) => {
   try {
-    const { weekId, title, day, category, priority } = req.body;
+    const { goalId, title, date } = req.body;
+    const clerkId = req.auth && req.auth.userId;
 
-    if (!weekId || !title || !day) {
+    if (!clerkId) {
+      return res.status(401).json({ message: 'Unauthenticated' });
+    }
+
+    if (!goalId || !title || !date) {
       return res
         .status(400)
-        .json({ message: 'weekId, title and day are required' });
+        .json({ message: 'goalId, title and date are required' });
+    }
+
+    if (!isValidObjectId(goalId)) {
+      return res.status(400).json({ message: 'Invalid goal id' });
+    }
+
+    const goal = await Goal.findOne({ _id: goalId, clerkId });
+    if (!goal) {
+      return res.status(404).json({ message: 'Goal not found' });
+    }
+
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return res.status(400).json({ message: 'Invalid date value' });
     }
 
     const task = await Task.create({
-      weekId,
+      clerkId,
+      goalId,
       title,
-      day,
-      category,
-      priority,
+      date: parsedDate,
     });
-
-    await updateWeekProgressFromTasks(weekId);
 
     res.status(201).json(task);
   } catch (error) {
@@ -30,14 +48,102 @@ const createTask = async (req, res) => {
   }
 };
 
-// GET /api/tasks/:weekId
-const getTasksByWeek = async (req, res) => {
+// GET /api/tasks/goal/:goalId
+const getTasksByGoal = async (req, res) => {
   try {
-    const { weekId } = req.params;
-    const tasks = await Task.find({ weekId }).sort({ createdAt: 1 });
+    const clerkId = req.auth && req.auth.userId;
+
+    if (!clerkId) {
+      return res.status(401).json({ message: 'Unauthenticated' });
+    }
+
+    const { goalId } = req.params;
+    const { from, to } = req.query;
+
+    if (!isValidObjectId(goalId)) {
+      return res.status(400).json({ message: 'Invalid goal id' });
+    }
+
+    const goal = await Goal.findOne({ _id: goalId, clerkId });
+    if (!goal) {
+      return res.status(404).json({ message: 'Goal not found' });
+    }
+
+    const query = { goalId, clerkId };
+
+    if (from || to) {
+      query.date = {};
+      if (from) {
+        const fromDate = new Date(from);
+        if (!Number.isNaN(fromDate.getTime())) {
+          query.date.$gte = fromDate;
+        }
+      }
+      if (to) {
+        const toDate = new Date(to);
+        if (!Number.isNaN(toDate.getTime())) {
+          query.date.$lte = toDate;
+        }
+      }
+    }
+
+    const tasks = await Task.find(query).sort({ date: 1, createdAt: 1 });
     res.json(tasks);
   } catch (error) {
-    console.error('Get tasks error:', error.message);
+    console.error('Get tasks by goal error:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// GET /api/tasks/today
+const getTodayTasks = async (req, res) => {
+  try {
+    const clerkId = req.auth && req.auth.userId;
+
+    if (!clerkId) {
+      return res.status(401).json({ message: 'Unauthenticated' });
+    }
+
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+    const userGoals = await Goal.find({ clerkId }).select('_id');
+    const goalIds = userGoals.map((g) => g._id);
+
+    const tasks = await Task.find({
+      clerkId,
+      goalId: { $in: goalIds },
+      date: { $gte: start, $lt: end },
+    }).sort({ createdAt: 1 });
+
+    res.json(tasks);
+  } catch (error) {
+    console.error('Get today tasks error:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// GET /api/tasks
+const getAllTasks = async (req, res) => {
+  try {
+    const clerkId = req.auth && req.auth.userId;
+
+    if (!clerkId) {
+      return res.status(401).json({ message: 'Unauthenticated' });
+    }
+
+    const userGoals = await Goal.find({ clerkId }).select('_id');
+    const goalIds = userGoals.map((g) => g._id);
+
+    const tasks = await Task.find({ clerkId, goalId: { $in: goalIds } }).sort({
+      date: 1,
+      createdAt: 1,
+    });
+
+    res.json(tasks);
+  } catch (error) {
+    console.error('Get all tasks error:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -45,39 +151,37 @@ const getTasksByWeek = async (req, res) => {
 // PUT /api/tasks/:id
 const updateTask = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id);
+    const clerkId = req.auth && req.auth.userId;
+
+    if (!clerkId) {
+      return res.status(401).json({ message: 'Unauthenticated' });
+    }
+
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid task id' });
+    }
+
+    const task = await Task.findOne({ _id: req.params.id, clerkId });
 
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
     }
 
-    const originalWeekId = task.weekId.toString();
-
-    if (req.body.weekId && req.body.weekId !== originalWeekId) {
-      task.weekId = req.body.weekId;
-    }
     if (req.body.title !== undefined) {
       task.title = req.body.title;
     }
-    if (req.body.day !== undefined) {
-      task.day = req.body.day;
-    }
-    if (req.body.category !== undefined) {
-      task.category = req.body.category;
-    }
-    if (req.body.priority !== undefined) {
-      task.priority = req.body.priority;
+    if (req.body.date !== undefined) {
+      const nextDate = new Date(req.body.date);
+      if (Number.isNaN(nextDate.getTime())) {
+        return res.status(400).json({ message: 'Invalid date value' });
+      }
+      task.date = nextDate;
     }
     if (req.body.completed !== undefined) {
       task.completed = req.body.completed;
     }
 
     const updatedTask = await task.save();
-
-    await updateWeekProgressFromTasks(originalWeekId);
-    if (updatedTask.weekId.toString() !== originalWeekId) {
-      await updateWeekProgressFromTasks(updatedTask.weekId.toString());
-    }
 
     res.json(updatedTask);
   } catch (error) {
@@ -89,16 +193,23 @@ const updateTask = async (req, res) => {
 // DELETE /api/tasks/:id
 const deleteTask = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id);
+    const clerkId = req.auth && req.auth.userId;
+
+    if (!clerkId) {
+      return res.status(401).json({ message: 'Unauthenticated' });
+    }
+
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid task id' });
+    }
+
+    const task = await Task.findOne({ _id: req.params.id, clerkId });
 
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
     }
 
-    const weekId = task.weekId.toString();
     await Task.deleteOne({ _id: task._id });
-
-    await updateWeekProgressFromTasks(weekId);
 
     res.json({ message: 'Task deleted' });
   } catch (error) {
@@ -109,7 +220,9 @@ const deleteTask = async (req, res) => {
 
 module.exports = {
   createTask,
-  getTasksByWeek,
+  getTasksByGoal,
+  getTodayTasks,
+  getAllTasks,
   updateTask,
   deleteTask,
 };

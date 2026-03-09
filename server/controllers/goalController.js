@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Goal = require('../models/Goal');
 
 const MonthPlan = require('../models/MonthPlan');
@@ -17,6 +18,21 @@ const monthNames = [
   'November',
   'December',
 ];
+
+const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
+
+const parseOptionalDate = (value) => {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed;
+};
 
 const generateMonthsAndWeeksForGoal = async (goal) => {
   if (!goal.startDate || !goal.endDate) {
@@ -71,18 +87,37 @@ const generateMonthsAndWeeksForGoal = async (goal) => {
 const createGoal = async (req, res) => {
   try {
     const { title, category, description, startDate, endDate } = req.body;
+    const clerkId = req.auth && req.auth.userId;
+
+    if (!clerkId) {
+      return res.status(401).json({ message: 'Unauthenticated' });
+    }
 
     if (!title) {
       return res.status(400).json({ message: 'Title is required' });
     }
 
+    const parsedStartDate = parseOptionalDate(startDate);
+    if (parsedStartDate === null) {
+      return res.status(400).json({ message: 'Invalid startDate value' });
+    }
+
+    const parsedEndDate = parseOptionalDate(endDate);
+    if (parsedEndDate === null) {
+      return res.status(400).json({ message: 'Invalid endDate value' });
+    }
+
+    if (parsedStartDate && parsedEndDate && parsedStartDate > parsedEndDate) {
+      return res.status(400).json({ message: 'startDate cannot be after endDate' });
+    }
+
     const goal = await Goal.create({
+      clerkId,
       title,
       category,
       description,
-      startDate,
-      endDate,
-      userId: req.user._id,
+      startDate: parsedStartDate,
+      endDate: parsedEndDate,
     });
 
     try {
@@ -103,7 +138,13 @@ const createGoal = async (req, res) => {
 // GET /api/goals
 const getGoals = async (req, res) => {
   try {
-    const goals = await Goal.find({ userId: req.user._id }).sort({ createdAt: -1 });
+    const clerkId = req.auth && req.auth.userId;
+
+    if (!clerkId) {
+      return res.status(401).json({ message: 'Unauthenticated' });
+    }
+
+    const goals = await Goal.find({ clerkId }).sort({ createdAt: -1 });
     res.json(goals);
   } catch (error) {
     console.error('Get goals error:', error.message);
@@ -114,9 +155,37 @@ const getGoals = async (req, res) => {
 // PUT /api/goals/:id
 const updateGoal = async (req, res) => {
   try {
+    const clerkId = req.auth && req.auth.userId;
+
+    if (!clerkId) {
+      return res.status(401).json({ message: 'Unauthenticated' });
+    }
+
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid goal id' });
+    }
+
+    const updateData = { ...req.body };
+
+    if (Object.prototype.hasOwnProperty.call(updateData, 'startDate')) {
+      const parsedStartDate = parseOptionalDate(updateData.startDate);
+      if (parsedStartDate === null) {
+        return res.status(400).json({ message: 'Invalid startDate value' });
+      }
+      updateData.startDate = parsedStartDate;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updateData, 'endDate')) {
+      const parsedEndDate = parseOptionalDate(updateData.endDate);
+      if (parsedEndDate === null) {
+        return res.status(400).json({ message: 'Invalid endDate value' });
+      }
+      updateData.endDate = parsedEndDate;
+    }
+
     const goal = await Goal.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user._id },
-      req.body,
+      { _id: req.params.id, clerkId },
+      updateData,
       { new: true }
     );
 
@@ -134,9 +203,19 @@ const updateGoal = async (req, res) => {
 // DELETE /api/goals/:id
 const deleteGoal = async (req, res) => {
   try {
+    const clerkId = req.auth && req.auth.userId;
+
+    if (!clerkId) {
+      return res.status(401).json({ message: 'Unauthenticated' });
+    }
+
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid goal id' });
+    }
+
     const goal = await Goal.findOneAndDelete({
       _id: req.params.id,
-      userId: req.user._id,
+      clerkId,
     });
 
     if (!goal) {

@@ -1,4 +1,4 @@
-import { Check, Circle, Pencil, Trash2, Tag, Flag } from 'lucide-react';
+import { Check, Circle, Pencil, Trash2, CalendarDays } from 'lucide-react';
 
 const TaskItem = ({
   task,
@@ -8,14 +8,12 @@ const TaskItem = ({
   onDelete
 }) => {
   const completed = Boolean(task?.completed);
-  const priority = task?.priority || 'medium';
-
-  const priorityClasses =
-    priority === 'high'
-      ? 'bg-rose-50 text-rose-600'
-      : priority === 'low'
-      ? 'bg-emerald-50 text-emerald-600'
-      : 'bg-amber-50 text-amber-600';
+  const dateLabel = task?.date
+    ? new Date(task.date).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric'
+      })
+    : 'No date';
 
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm transition hover:border-slate-300 hover:shadow-md">
@@ -45,21 +43,9 @@ const TaskItem = ({
             {task?.title}
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-            <span className="rounded-full bg-slate-100 px-2 py-0.5">
-              {task?.day || 'No day'}
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5">
-              <Tag className="h-3 w-3" aria-hidden="true" />
-              {task?.category || 'General'}
-            </span>
-            <span
-              className={[
-                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
-                priorityClasses
-              ].join(' ')}
-            >
-              <Flag className="h-3 w-3" aria-hidden="true" />
-              {priority.charAt(0).toUpperCase() + priority.slice(1)}
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5">
+              <CalendarDays className="h-3 w-3" aria-hidden="true" />
+              {dateLabel}
             </span>
           </div>
         </div>

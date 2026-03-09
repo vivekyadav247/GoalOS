@@ -1,14 +1,30 @@
-﻿import React from 'react';
+import React, { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { ClerkProvider } from '@clerk/react';
 import App from './App';
 import './index.css';
 
+const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
+  <StrictMode>
+    <ClerkProvider
+      publishableKey={clerkPublishableKey}
+      afterSignOutUrl="/"
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
+      localization={{
+        userButton: {
+          action__manageAccount: 'Profile',
+          action__signOut: 'Sign out'
+        }
+      }}
+    >
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </ClerkProvider>
+  </StrictMode>
 );
 

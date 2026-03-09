@@ -10,8 +10,6 @@ const Goals = () => {
   const {
     goals,
     tasks,
-    weekToMonth,
-    monthToGoal,
     loading,
     error,
     refresh
@@ -27,8 +25,7 @@ const Goals = () => {
     const byGoal = {};
 
     for (const task of tasks) {
-      const monthId = weekToMonth[task.weekId];
-      const goalId = monthToGoal[monthId];
+      const goalId = task.goalId;
       if (!goalId) {
         continue;
       }
@@ -44,7 +41,7 @@ const Goals = () => {
     }
 
     return byGoal;
-  }, [tasks, weekToMonth, monthToGoal]);
+  }, [tasks]);
 
   const handleSaveGoal = async (payload) => {
     setModalLoading(true);

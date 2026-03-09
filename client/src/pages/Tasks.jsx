@@ -1,31 +1,12 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import TaskItem from '../components/TaskItem';
 import GraphCard from '../components/GraphCard';
 import CreateTaskModal from '../components/CreateTaskModal';
 import { getApiErrorMessage, taskApi } from '../services/api';
 import usePlannerData from '../hooks/usePlannerData';
 
-const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-const normalizeDay = (value) => {
-  if (!value) {
-    return '';
-  }
-  const normalized = String(value).trim().toLowerCase();
-  const matched = weekdays.find((day) => day.toLowerCase() === normalized);
-  return matched || '';
-};
-
 const Tasks = () => {
-  const {
-    months,
-    weeks,
-    weeksByMonth,
-    tasks,
-    loading,
-    error,
-    refresh
-  } = usePlannerData();
+  const { goals, tasks, loading, error, refresh } = usePlannerData();
 
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [taskModalLoading, setTaskModalLoading] = useState(false);
@@ -33,42 +14,49 @@ const Tasks = () => {
   const [busyTaskId, setBusyTaskId] = useState('');
   const [actionError, setActionError] = useState('');
 
-  const sortedMonths = useMemo(
-    () => [...months].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
-    [months]
-  );
-
-  const sortedWeeks = useMemo(
-    () => [...weeks].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
-    [weeks]
-  );
-
-  const currentMonthId = sortedMonths[0]?._id || '';
-  const currentWeekId = sortedWeeks[0]?._id || '';
-  const monthWeekIds = (weeksByMonth[currentMonthId] || []).map((week) => week._id);
-
-  const todayName = useMemo(
-    () => normalizeDay(new Date().toLocaleDateString(undefined, { weekday: 'long' })),
-    []
+  const goalOptions = useMemo(
+    () =>
+      goals.map((goal) => ({
+        value: goal._id,
+        label: goal.title
+      })),
+    [goals]
   );
 
   const grouped = useMemo(() => {
     const today = [];
     const thisWeek = [];
     const thisMonth = [];
+    if (!tasks.length) {
+      return { today, thisWeek, thisMonth };
+    }
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+
+    const weekStart = new Date(todayStart);
+    const day = weekStart.getDay() || 7;
+    weekStart.setDate(weekStart.getDate() - (day - 1));
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
     for (const task of tasks) {
-      if (task.weekId === currentWeekId && normalizeDay(task.day) === todayName) {
+      if (!task.date) continue;
+      const date = new Date(task.date);
+
+      if (date >= todayStart && date < todayEnd) {
         today.push(task);
-        continue;
       }
 
-      if (task.weekId === currentWeekId) {
+      if (date >= weekStart && date < weekEnd) {
         thisWeek.push(task);
-        continue;
       }
 
-      if (monthWeekIds.includes(task.weekId)) {
+      if (date >= monthStart && date < monthEnd) {
         thisMonth.push(task);
       }
     }
@@ -78,18 +66,7 @@ const Tasks = () => {
       thisWeek,
       thisMonth
     };
-  }, [tasks, currentWeekId, monthWeekIds, todayName]);
-
-  const weekOptions = useMemo(() => {
-    const monthById = Object.fromEntries(months.map((month) => [month._id, month.monthName]));
-
-    return weeks
-      .map((week) => ({
-        value: week._id,
-        label: `${monthById[week.monthId] || 'Month'} • Week ${week.weekNumber}`
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [months, weeks]);
+  }, [tasks]);
 
   const handleToggleTask = async (task) => {
     setBusyTaskId(task._id);
@@ -130,9 +107,19 @@ const Tasks = () => {
 
     try {
       if (editingTask?._id) {
-        await taskApi.update(editingTask._id, payload);
+        await taskApi.update(editingTask._id, {
+          title: payload.title,
+          date: payload.date
+        });
       } else {
-        await taskApi.create(payload);
+        if (!payload.goalId) {
+          throw new Error('Select a goal before creating a task');
+        }
+        await taskApi.create({
+          goalId: payload.goalId,
+          title: payload.title,
+          date: payload.date
+        });
       }
 
       setTaskModalOpen(false);
@@ -161,6 +148,10 @@ const Tasks = () => {
         <button
           className="btn-primary"
           onClick={() => {
+            if (goals.length === 0) {
+              setActionError('Create a goal first, then add tasks.');
+              return;
+            }
             setEditingTask(null);
             setTaskModalOpen(true);
           }}
@@ -210,8 +201,8 @@ const Tasks = () => {
         open={taskModalOpen}
         loading={taskModalLoading}
         initialValue={editingTask}
-        weekOptions={weekOptions}
-        defaultWeekId={editingTask?.weekId || currentWeekId}
+        goalOptions={goalOptions}
+        requireGoal={!editingTask}
         onClose={() => {
           setTaskModalOpen(false);
           setEditingTask(null);
@@ -223,4 +214,3 @@ const Tasks = () => {
 };
 
 export default Tasks;
-

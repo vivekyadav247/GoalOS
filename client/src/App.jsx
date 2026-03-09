@@ -1,4 +1,6 @@
-﻿import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { Show, useAuth, useUser } from '@clerk/react';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import MobileNav from './components/MobileNav';
@@ -8,54 +10,25 @@ import GoalDetail from './pages/GoalDetail';
 import Tasks from './pages/Tasks';
 import Analytics from './pages/Analytics';
 import Calendar from './pages/Calendar';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import { isAuthenticated } from './services/api';
+import LandingPage from './pages/LandingPage';
+import Profile from './pages/Profile';
+import { clearClerkTokenGetter, setClerkTokenGetter } from './services/api';
 
 const ProtectedRoute = ({ children }) => {
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
+  const { isSignedIn, isLoaded } = useUser();
+
+  if (!isLoaded) {
+    return null;
   }
+
+  if (!isSignedIn) {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 };
 
-const PublicOnlyRoute = ({ children }) => {
-  if (isAuthenticated()) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  return children;
-};
-
-const App = () => {
-  const location = useLocation();
-  const authPath = location.pathname === '/login' || location.pathname === '/register';
-
-  if (authPath) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_20%_10%,#dbeafe_0%,#f6f7fb_45%,#eef2ff_100%)] px-4 py-8">
-        <Routes>
-          <Route
-            path="/login"
-            element={
-              <PublicOnlyRoute>
-                <Login />
-              </PublicOnlyRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <PublicOnlyRoute>
-                <Register />
-              </PublicOnlyRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </main>
-    );
-  }
-
+const AppShell = () => {
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[18rem_1fr]">
       <Sidebar />
@@ -63,64 +36,58 @@ const App = () => {
         <Navbar />
         <main className="px-4 pb-24 pt-4 sm:px-6 lg:px-8 lg:pb-8 lg:pt-6">
           <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/goals"
-              element={
-                <ProtectedRoute>
-                  <Goals />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/goals/:goalId"
-              element={
-                <ProtectedRoute>
-                  <GoalDetail />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/tasks"
-              element={
-                <ProtectedRoute>
-                  <Tasks />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/analytics"
-              element={
-                <ProtectedRoute>
-                  <Analytics />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/calendar"
-              element={
-                <ProtectedRoute>
-                  <Calendar />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/goals/:goalId" element={<GoalDetail />} />
+            <Route path="/tasks" element={<Tasks />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>
       </div>
-
-      {isAuthenticated() ? <MobileNav /> : null}
+      <Show when="signed-in">
+        <MobileNav />
+      </Show>
     </div>
   );
 };
 
-export default App;
+const App = () => {
+  const { isSignedIn, isLoaded } = useUser();
+  const { getToken } = useAuth();
 
+  useEffect(() => {
+    setClerkTokenGetter(() => getToken());
+
+    return () => {
+      clearClerkTokenGetter();
+    };
+  }, [getToken]);
+
+  if (!isLoaded) {
+    return null;
+  }
+
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          isSignedIn ? <Navigate to="/dashboard" replace /> : <LandingPage />
+        }
+      />
+      <Route
+        path="/*"
+        element={
+          <ProtectedRoute>
+            <AppShell />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
+  );
+};
+
+export default App;

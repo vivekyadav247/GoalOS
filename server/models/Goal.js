@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 const goalSchema = new mongoose.Schema(
   {
+    clerkId: {
+      type: String,
+      required: true,
+      index: true,
+    },
     title: {
       type: String,
       required: true,
@@ -30,7 +35,6 @@ const goalSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
       index: true,
     },
   },

@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import CreateTaskModal from '../components/CreateTaskModal';
 import GoalPlanner from '../components/GoalPlanner';
-import { getApiErrorMessage, goalApi, monthApi, taskApi, weekApi } from '../services/api';
+import { getApiErrorMessage, goalApi, taskApi } from '../services/api';
 import useGoalHierarchy from '../hooks/useGoalHierarchy';
 
 const GoalDetail = () => {
@@ -19,18 +19,111 @@ const GoalDetail = () => {
     refresh
   } = useGoalHierarchy(goalId);
 
-  const [monthForm, setMonthForm] = useState({ monthName: '', description: '' });
-  const [weekForms, setWeekForms] = useState({});
   const [openMonths, setOpenMonths] = useState({});
   const [openWeeks, setOpenWeeks] = useState({});
 
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [taskModalLoading, setTaskModalLoading] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
-  const [selectedWeekForTask, setSelectedWeekForTask] = useState('');
   const [busyTaskId, setBusyTaskId] = useState('');
   const [busyAction, setBusyAction] = useState('');
   const [actionError, setActionError] = useState('');
+  const [selectedDateForTask, setSelectedDateForTask] = useState('');
+
+  const weekRefs = useRef({});
+  const hasAutoScrolledRef = useRef(false);
+
+  const getAllWeeks = useCallback(
+    () => Object.values(weeksByMonth || {}).flat(),
+    [weeksByMonth]
+  );
+
+  const getWeekById = useCallback(
+    (weekId) => getAllWeeks().find((week) => week._id === weekId) || null,
+    [getAllWeeks]
+  );
+
+  const findWeekIdForDate = useCallback(
+    (rawDate) => {
+      if (!rawDate) {
+        return '';
+      }
+
+      const target = new Date(rawDate);
+      if (Number.isNaN(target.getTime())) {
+        return '';
+      }
+
+      target.setHours(0, 0, 0, 0);
+      const ts = target.getTime();
+
+      const allWeeks = getAllWeeks();
+      const match = allWeeks.find((week) => {
+        if (!week.startDate || !week.endDate) {
+          return false;
+        }
+
+        const start = new Date(week.startDate);
+        const end = new Date(week.endDate);
+
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+          return false;
+        }
+
+        return ts >= start.getTime() && ts <= end.getTime();
+      });
+
+      return match?._id || '';
+    },
+    [getAllWeeks]
+  );
+
+  const todayWeekId = useMemo(
+    () => findWeekIdForDate(new Date()),
+    [findWeekIdForDate]
+  );
+
+  const scrollToWeek = useCallback((weekId) => {
+    if (!weekId) {
+      return;
+    }
+
+    const node = weekRefs.current[weekId];
+    if (node && typeof node.scrollIntoView === 'function') {
+      node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+
+  const registerWeekRef = useCallback((weekId, node) => {
+    if (!weekId) {
+      return;
+    }
+
+    if (node) {
+      weekRefs.current[weekId] = node;
+    } else {
+      delete weekRefs.current[weekId];
+    }
+  }, []);
+
+  const deriveDefaultDateForWeek = useCallback(
+    (weekId) => {
+      const week = getWeekById(weekId);
+      if (!week || !week.startDate) {
+        return '';
+      }
+
+      const start = new Date(week.startDate);
+      if (Number.isNaN(start.getTime())) {
+        return '';
+      }
+
+      start.setDate(start.getDate() + 1);
+      start.setHours(0, 0, 0, 0);
+      return start.toISOString().slice(0, 10);
+    },
+    [getWeekById]
+  );
 
   useEffect(() => {
     if (months.length === 0) {
@@ -41,29 +134,57 @@ const GoalDetail = () => {
       if (Object.keys(prev).length > 0) {
         return prev;
       }
-      return { [months[0]._id]: true };
+
+      let initialMonthId = months[0]?._id;
+
+      if (todayWeekId) {
+        const monthWithToday = months.find((month) =>
+          (weeksByMonth[month._id] || []).some((week) => week._id === todayWeekId)
+        );
+        if (monthWithToday) {
+          initialMonthId = monthWithToday._id;
+        }
+      }
+
+      if (!initialMonthId) {
+        return prev;
+      }
+
+      return { [initialMonthId]: true };
     });
-  }, [months]);
+  }, [months, weeksByMonth, todayWeekId]);
 
-  const allWeeks = useMemo(
-    () =>
-      months.flatMap((month) =>
-        (weeksByMonth[month._id] || []).map((week) => ({
-          ...week,
-          monthName: month.monthName
-        }))
-      ),
-    [months, weeksByMonth]
-  );
+  useEffect(() => {
+    if (!todayWeekId || hasAutoScrolledRef.current) {
+      return;
+    }
 
-  const weekOptions = useMemo(
-    () =>
-      allWeeks.map((week) => ({
-        value: week._id,
-        label: `${week.monthName} • Week ${week.weekNumber}`
-      })),
-    [allWeeks]
-  );
+    let monthIdForToday = '';
+    for (const month of months) {
+      const monthWeeks = weeksByMonth[month._id] || [];
+      if (monthWeeks.some((week) => week._id === todayWeekId)) {
+        monthIdForToday = month._id;
+        break;
+      }
+    }
+
+    if (!monthIdForToday) {
+      return;
+    }
+
+    setOpenMonths((prev) => ({ ...prev, [monthIdForToday]: true }));
+    setOpenWeeks((prev) => ({ ...prev, [todayWeekId]: true }));
+
+    const timeout = window.setTimeout(() => {
+      scrollToWeek(todayWeekId);
+    }, 80);
+
+    hasAutoScrolledRef.current = true;
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [todayWeekId, months, weeksByMonth, scrollToWeek]);
 
   const goalStats = useMemo(() => {
     const completed = tasks.filter((task) => task.completed).length;
@@ -83,68 +204,65 @@ const GoalDetail = () => {
     setOpenWeeks((prev) => ({ ...prev, [weekId]: !prev[weekId] }));
   };
 
-  const handleCreateMonth = async (event) => {
-    event.preventDefault();
-    const monthName = monthForm.monthName.trim();
-    if (!monthName) {
-      setActionError('Month name is required');
+  const handleJumpToDate = useCallback(
+    (rawDate) => {
+      if (!rawDate) {
+        return;
+      }
+
+      const weekId = findWeekIdForDate(rawDate);
+      if (!weekId) {
+        return;
+      }
+
+      let monthIdForWeek = '';
+      for (const month of months) {
+        const monthWeeks = weeksByMonth[month._id] || [];
+        if (monthWeeks.some((week) => week._id === weekId)) {
+          monthIdForWeek = month._id;
+          break;
+        }
+      }
+
+      if (monthIdForWeek) {
+        setOpenMonths((prev) => ({ ...prev, [monthIdForWeek]: true }));
+      }
+
+      setOpenWeeks((prev) => ({ ...prev, [weekId]: true }));
+
+      window.setTimeout(() => {
+        scrollToWeek(weekId);
+      }, 80);
+    },
+    [findWeekIdForDate, months, weeksByMonth, scrollToWeek]
+  );
+
+  const handleJumpToToday = useCallback(() => {
+    handleJumpToDate(new Date());
+  }, [handleJumpToDate]);
+
+  const handleJumpToStart = useCallback(() => {
+    if (!goal?.startDate) {
       return;
     }
+    handleJumpToDate(goal.startDate);
+  }, [goal, handleJumpToDate]);
 
-    setBusyAction('month');
-    setActionError('');
-
-    try {
-      await monthApi.create({
-        goalId,
-        monthName,
-        description: monthForm.description.trim()
-      });
-      setMonthForm({ monthName: '', description: '' });
-      await refresh();
-    } catch (err) {
-      setActionError(getApiErrorMessage(err, 'Unable to create month plan'));
-    } finally {
-      setBusyAction('');
-    }
-  };
-
-  const handleCreateWeek = async (event, monthId) => {
-    event.preventDefault();
-    const form = weekForms[monthId] || { weekNumber: '', description: '' };
-    const weekNumber = Number(form.weekNumber);
-
-    if (!Number.isInteger(weekNumber) || weekNumber < 1 || weekNumber > 53) {
-      setActionError('Week number must be between 1 and 53');
+  const handleJumpToEnd = useCallback(() => {
+    if (!goal?.endDate) {
       return;
     }
-
-    setBusyAction(`week-${monthId}`);
-    setActionError('');
-
-    try {
-      await weekApi.create({
-        monthId,
-        weekNumber,
-        description: (form.description || '').trim()
-      });
-
-      setWeekForms((prev) => ({
-        ...prev,
-        [monthId]: { weekNumber: '', description: '' }
-      }));
-      setOpenMonths((prev) => ({ ...prev, [monthId]: true }));
-      await refresh();
-    } catch (err) {
-      setActionError(getApiErrorMessage(err, 'Unable to create week plan'));
-    } finally {
-      setBusyAction('');
-    }
-  };
+    handleJumpToDate(goal.endDate);
+  }, [goal, handleJumpToDate]);
 
   const handleSaveTask = async (payload) => {
-    if (!payload.weekId) {
-      setActionError('Select a week before saving a task');
+    if (!goalId) {
+      setActionError('Goal is missing');
+      return;
+    }
+
+    if (!payload.date) {
+      setActionError('Select a date before saving a task');
       return;
     }
 
@@ -153,14 +271,20 @@ const GoalDetail = () => {
 
     try {
       if (editingTask?._id) {
-        await taskApi.update(editingTask._id, payload);
+        await taskApi.update(editingTask._id, {
+          title: payload.title,
+          date: payload.date
+        });
       } else {
-        await taskApi.create(payload);
+        await taskApi.create({
+          goalId,
+          title: payload.title,
+          date: payload.date
+        });
       }
 
       setTaskModalOpen(false);
       setEditingTask(null);
-      setSelectedWeekForTask('');
       await refresh();
     } catch (err) {
       setActionError(getApiErrorMessage(err, 'Unable to save task'));
@@ -250,6 +374,14 @@ const GoalDetail = () => {
     }
   };
 
+  const taskModalInitialValue = useMemo(
+    () => editingTask
+      || (selectedDateForTask
+        ? { title: '', date: selectedDateForTask }
+        : null),
+    [editingTask, selectedDateForTask]
+  );
+
   if (loading) {
     return <div className="surface-card p-6 text-sm text-slate-500">Loading goal details...</div>;
   }
@@ -270,7 +402,7 @@ const GoalDetail = () => {
           <h2 className="page-title mt-2">{goal.title}</h2>
           <p className="page-subtitle max-w-3xl">{goal.description || 'Build your monthly, weekly, and daily execution plan.'}</p>
           <p className="mt-3 text-sm text-slate-600">
-            {goalStats.completed}/{goalStats.total} tasks completed • {goalStats.progress}%
+            {goalStats.completed}/{goalStats.total} tasks completed - {goalStats.progress}%
           </p>
         </div>
 
@@ -279,7 +411,7 @@ const GoalDetail = () => {
             className="btn-secondary"
             onClick={() => {
               setEditingTask(null);
-              setSelectedWeekForTask('');
+              setSelectedDateForTask('');
               setTaskModalOpen(true);
             }}
           >
@@ -298,24 +430,39 @@ const GoalDetail = () => {
       {actionError ? <div className="surface-card p-4 text-sm text-rose-700">{actionError}</div> : null}
 
       <section className="surface-card p-4 sm:p-5">
-        <h3 className="text-sm font-semibold text-slate-900">Create monthly plan</h3>
-        <form onSubmit={handleCreateMonth} className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
-          <input
-            className="input-base"
-            placeholder="Month name (e.g. April 2026)"
-            value={monthForm.monthName}
-            onChange={(event) => setMonthForm((prev) => ({ ...prev, monthName: event.target.value }))}
-          />
-          <input
-            className="input-base"
-            placeholder="Description (optional)"
-            value={monthForm.description}
-            onChange={(event) => setMonthForm((prev) => ({ ...prev, description: event.target.value }))}
-          />
-          <button className="btn-primary" disabled={busyAction === 'month'}>
-            {busyAction === 'month' ? 'Creating...' : 'Add Month'}
-          </button>
-        </form>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900">Planner timeline</h3>
+            <p className="mt-2 text-xs text-slate-500">
+              Months and weeks are generated automatically from the goal date range.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+            <button
+              type="button"
+              className="btn-secondary px-3 py-1.5 text-xs"
+              onClick={handleJumpToToday}
+            >
+              Jump to Today
+            </button>
+            <button
+              type="button"
+              className="btn-secondary px-3 py-1.5 text-xs"
+              onClick={handleJumpToStart}
+              disabled={!goal.startDate}
+            >
+              Jump to Start
+            </button>
+            <button
+              type="button"
+              className="btn-secondary px-3 py-1.5 text-xs"
+              onClick={handleJumpToEnd}
+              disabled={!goal.endDate}
+            >
+              Jump to End
+            </button>
+          </div>
+        </div>
       </section>
 
       <section className="space-y-3">
@@ -323,47 +470,42 @@ const GoalDetail = () => {
           months={months}
           weeksByMonth={weeksByMonth}
           tasksByWeek={tasksByWeek}
-          weekForms={weekForms}
           openMonths={openMonths}
           openWeeks={openWeeks}
-          busyAction={busyAction}
           busyTaskId={busyTaskId}
           onToggleMonth={toggleMonth}
           onToggleWeek={toggleWeek}
-          onChangeWeekForm={(monthId, nextForm) =>
-            setWeekForms((prev) => ({
-              ...prev,
-              [monthId]: nextForm
-            }))
-          }
-          onCreateWeek={handleCreateWeek}
           onAddTask={(weekId) => {
             setEditingTask(null);
-            setSelectedWeekForTask(weekId);
+            if (weekId) {
+              setSelectedDateForTask(deriveDefaultDateForWeek(weekId));
+            } else {
+              setSelectedDateForTask('');
+            }
             setTaskModalOpen(true);
           }}
           onToggleTask={handleToggleTask}
           onEditTask={(task) => {
             setEditingTask(task);
-            setSelectedWeekForTask(task.weekId);
+            setSelectedDateForTask(
+              task.date ? String(task.date).slice(0, 10) : ''
+            );
             setTaskModalOpen(true);
           }}
           onDeleteTask={handleDeleteTask}
-          onBulkCreateTasks={handleBulkCreateTasks}
+          todayWeekId={todayWeekId}
+          onWeekRef={registerWeekRef}
         />
       </section>
 
       <CreateTaskModal
         open={taskModalOpen}
         loading={taskModalLoading}
-        initialValue={editingTask}
-        weekOptions={weekOptions}
-        defaultWeekId={selectedWeekForTask}
-        lockWeek={Boolean(selectedWeekForTask && !editingTask)}
+        initialValue={taskModalInitialValue}
         onClose={() => {
           setTaskModalOpen(false);
           setEditingTask(null);
-          setSelectedWeekForTask('');
+          setSelectedDateForTask('');
         }}
         onSubmit={handleSaveTask}
       />
@@ -372,4 +514,3 @@ const GoalDetail = () => {
 };
 
 export default GoalDetail;
-

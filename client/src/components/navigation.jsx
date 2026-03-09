@@ -11,6 +11,7 @@ export const PAGE_TITLES = {
   '/goals': 'Goals',
   '/tasks': 'Tasks',
   '/analytics': 'Analytics',
-  '/calendar': 'Calendar'
+  '/calendar': 'Calendar',
+  '/profile': 'Profile'
 };
 
