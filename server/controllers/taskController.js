@@ -5,7 +5,7 @@ const { updateWeekProgressFromTasks } = require('./weekController');
 // POST /api/tasks
 const createTask = async (req, res) => {
   try {
-    const { weekId, title, day, category } = req.body;
+    const { weekId, title, day, category, priority } = req.body;
 
     if (!weekId || !title || !day) {
       return res
@@ -18,6 +18,7 @@ const createTask = async (req, res) => {
       title,
       day,
       category,
+      priority,
     });
 
     await updateWeekProgressFromTasks(weekId);
@@ -63,6 +64,9 @@ const updateTask = async (req, res) => {
     }
     if (req.body.category !== undefined) {
       task.category = req.body.category;
+    }
+    if (req.body.priority !== undefined) {
+      task.priority = req.body.priority;
     }
     if (req.body.completed !== undefined) {
       task.completed = req.body.completed;

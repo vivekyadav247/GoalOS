@@ -1,15 +1,20 @@
-﻿const statusClasses = {
+const statusClasses = {
   completed: 'border-emerald-300 bg-emerald-200',
   partial: 'border-amber-300 bg-amber-200',
   missed: 'border-rose-300 bg-rose-200',
   none: 'border-slate-200 bg-slate-100'
 };
 
+import { CalendarDays } from 'lucide-react';
+
 const CalendarView = ({ weeks = [] }) => {
   return (
     <section className="surface-card overflow-hidden p-4 sm:p-5">
       <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-slate-600">
-        <span className="font-semibold text-slate-800">Productivity History</span>
+        <span className="inline-flex items-center gap-1 font-semibold text-slate-800">
+          <CalendarDays className="h-4 w-4 text-blue-600" aria-hidden="true" />
+          Productivity History
+        </span>
         <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-emerald-300" /> Completed</span>
         <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-300" /> Partial</span>
         <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-rose-300" /> Missed</span>

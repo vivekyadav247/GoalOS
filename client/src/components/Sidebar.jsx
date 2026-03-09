@@ -1,5 +1,14 @@
-﻿import { NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from './navigation';
+import { LayoutDashboard, Target, CheckSquare, BarChart2, CalendarDays } from 'lucide-react';
+
+const navIconMap = {
+  '/dashboard': LayoutDashboard,
+  '/goals': Target,
+  '/tasks': CheckSquare,
+  '/analytics': BarChart2,
+  '/calendar': CalendarDays
+};
 
 const Sidebar = () => {
   return (
@@ -16,25 +25,28 @@ const Sidebar = () => {
         </div>
 
         <nav className="space-y-1">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                [
-                  'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
-                  isActive
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                ].join(' ')
-              }
-            >
-              <span className="flex h-6 w-6 items-center justify-center rounded-lg border border-slate-200 bg-white text-[11px]">
-                {item.short}
-              </span>
-              {item.label}
-            </NavLink>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const Icon = navIconMap[item.to];
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  [
+                    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
+                    isActive
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  ].join(' ')
+                }
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-lg border border-slate-200 bg-white text-[11px]">
+                  {Icon ? <Icon className="h-3.5 w-3.5" aria-hidden="true" /> : item.short}
+                </span>
+                {item.label}
+              </NavLink>
+            );
+          })}
         </nav>
       </div>
 

@@ -1,4 +1,6 @@
-﻿const TaskItem = ({
+import { Check, Circle, Pencil, Trash2, Tag, Flag } from 'lucide-react';
+
+const TaskItem = ({
   task,
   busy = false,
   onToggle,
@@ -6,23 +8,31 @@
   onDelete
 }) => {
   const completed = Boolean(task?.completed);
+  const priority = task?.priority || 'medium';
+
+  const priorityClasses =
+    priority === 'high'
+      ? 'bg-rose-50 text-rose-600'
+      : priority === 'low'
+      ? 'bg-emerald-50 text-emerald-600'
+      : 'bg-amber-50 text-amber-600';
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm transition hover:border-slate-300">
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm transition hover:border-slate-300 hover:shadow-md">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
           onClick={onToggle}
           disabled={busy}
-          className={[
-            'flex h-5 w-5 shrink-0 items-center justify-center rounded border transition',
-            completed
-              ? 'border-emerald-500 bg-emerald-500 text-white'
-              : 'border-slate-300 bg-white text-transparent hover:border-slate-400',
-            busy ? 'opacity-60' : ''
-          ].join(' ')}
+            className={[
+              'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs transition',
+              completed
+                ? 'border-emerald-500 bg-emerald-500 text-white'
+                : 'border-slate-300 bg-white text-slate-300 hover:border-slate-400 hover:text-slate-400',
+              busy ? 'opacity-60' : ''
+            ].join(' ')}
         >
-          x
+          {completed ? <Check className="h-3 w-3" aria-hidden="true" /> : <Circle className="h-3 w-3" aria-hidden="true" />}
         </button>
 
         <div className="min-w-0">
@@ -34,10 +44,23 @@
           >
             {task?.title}
           </p>
-          <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-            <span>{task?.day || 'No day'}</span>
-            <span>•</span>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5">{task?.category || 'General'}</span>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            <span className="rounded-full bg-slate-100 px-2 py-0.5">
+              {task?.day || 'No day'}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5">
+              <Tag className="h-3 w-3" aria-hidden="true" />
+              {task?.category || 'General'}
+            </span>
+            <span
+              className={[
+                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                priorityClasses
+              ].join(' ')}
+            >
+              <Flag className="h-3 w-3" aria-hidden="true" />
+              {priority.charAt(0).toUpperCase() + priority.slice(1)}
+            </span>
           </div>
         </div>
       </div>
@@ -48,8 +71,9 @@
             type="button"
             onClick={onEdit}
             disabled={busy}
-            className="rounded-lg px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100 disabled:opacity-60"
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100 disabled:opacity-60"
           >
+            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
             Edit
           </button>
         ) : null}
@@ -58,8 +82,9 @@
             type="button"
             onClick={onDelete}
             disabled={busy}
-            className="rounded-lg px-2 py-1 text-xs font-medium text-rose-600 transition hover:bg-rose-50 disabled:opacity-60"
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-rose-600 transition hover:bg-rose-50 disabled:opacity-60"
           >
+            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
             Delete
           </button>
         ) : null}

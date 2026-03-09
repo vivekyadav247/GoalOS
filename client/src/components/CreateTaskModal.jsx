@@ -1,12 +1,19 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import Dropdown from './Dropdown';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const PRIORITY_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' }
+];
 
 const defaultForm = {
   weekId: '',
   title: '',
   day: DAYS[0],
-  category: ''
+  category: '',
+  priority: 'medium'
 };
 
 const CreateTaskModal = ({
@@ -31,7 +38,8 @@ const CreateTaskModal = ({
         weekId: initialValue.weekId || defaultWeekId || weekOptions[0]?.value || '',
         title: initialValue.title || '',
         day: initialValue.day || DAYS[0],
-        category: initialValue.category || ''
+        category: initialValue.category || '',
+        priority: initialValue.priority || 'medium'
       });
       return;
     }
@@ -57,7 +65,8 @@ const CreateTaskModal = ({
       weekId: form.weekId,
       title: form.title.trim(),
       day: form.day,
-      category: form.category.trim()
+      category: form.category.trim(),
+      priority: form.priority
     });
   };
 
@@ -77,24 +86,22 @@ const CreateTaskModal = ({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Week</label>
-            <select
-              name="weekId"
-              value={form.weekId}
-              onChange={handleChange}
-              className="input-base"
-              disabled={lockWeek}
-              required
-            >
-              {weekOptions.length === 0 ? <option value="">No weeks available</option> : null}
-              {weekOptions.map((week) => (
-                <option key={week.value} value={week.value}>
-                  {week.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Dropdown
+            label="Week"
+            value={form.weekId}
+            onChange={(nextValue) => setForm((prev) => ({ ...prev, weekId: nextValue }))}
+            options={
+              weekOptions.length === 0
+                ? []
+                : weekOptions.map((week) => ({
+                    value: week.value,
+                    label: week.label
+                  }))
+            }
+            placeholder={weekOptions.length === 0 ? 'No weeks available' : 'Select week'}
+            className="w-full"
+            buttonClassName={lockWeek ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}
+          />
 
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-600">Task title</label>
@@ -109,16 +116,16 @@ const CreateTaskModal = ({
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Day</label>
-              <select name="day" value={form.day} onChange={handleChange} className="input-base">
-                {DAYS.map((day) => (
-                  <option key={day} value={day}>
-                    {day}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Dropdown
+              label="Day"
+              value={form.day}
+              onChange={(nextValue) => setForm((prev) => ({ ...prev, day: nextValue }))}
+              options={DAYS.map((day) => ({
+                value: day,
+                label: day
+              }))}
+              className="w-full"
+            />
 
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600">Category</label>
@@ -131,6 +138,14 @@ const CreateTaskModal = ({
               />
             </div>
           </div>
+
+          <Dropdown
+            label="Priority"
+            value={form.priority}
+            onChange={(nextValue) => setForm((prev) => ({ ...prev, priority: nextValue }))}
+            options={PRIORITY_OPTIONS}
+            className="w-full"
+          />
 
           <div className="flex items-center justify-end gap-2 pt-1">
             <button type="button" onClick={onClose} className="btn-secondary">

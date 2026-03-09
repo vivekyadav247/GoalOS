@@ -1,19 +1,9 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import TaskItem from '../components/TaskItem';
 import CreateTaskModal from '../components/CreateTaskModal';
+import GoalPlanner from '../components/GoalPlanner';
 import { getApiErrorMessage, goalApi, monthApi, taskApi, weekApi } from '../services/api';
 import useGoalHierarchy from '../hooks/useGoalHierarchy';
-
-const computeStats = (tasks = []) => {
-  const completed = tasks.filter((task) => task.completed).length;
-  const total = tasks.length;
-  return {
-    completed,
-    total,
-    progress: total ? Math.round((completed / total) * 100) : 0
-  };
-};
 
 const GoalDetail = () => {
   const navigate = useNavigate();
@@ -75,7 +65,15 @@ const GoalDetail = () => {
     [allWeeks]
   );
 
-  const goalStats = useMemo(() => computeStats(tasks), [tasks]);
+  const goalStats = useMemo(() => {
+    const completed = tasks.filter((task) => task.completed).length;
+    const total = tasks.length;
+    return {
+      completed,
+      total,
+      progress: total ? Math.round((completed / total) * 100) : 0
+    };
+  }, [tasks]);
 
   const toggleMonth = (monthId) => {
     setOpenMonths((prev) => ({ ...prev, [monthId]: !prev[monthId] }));
@@ -204,6 +202,35 @@ const GoalDetail = () => {
     }
   };
 
+  const handleBulkCreateTasks = async (weekId, payloads) => {
+    if (!Array.isArray(payloads) || payloads.length === 0) {
+      return;
+    }
+
+    setBusyAction(`bulk-week-${weekId}`);
+    setActionError('');
+
+    try {
+      // Sequential to keep server load predictable and ordering stable.
+      // eslint-disable-next-line no-restricted-syntax
+      for (const payload of payloads) {
+        // eslint-disable-next-line no-await-in-loop
+        await taskApi.create({
+          weekId,
+          title: payload.title,
+          day: payload.day,
+          category: payload.category,
+          priority: payload.priority
+        });
+      }
+      await refresh();
+    } catch (err) {
+      setActionError(getApiErrorMessage(err, 'Unable to apply weekly pattern'));
+    } finally {
+      setBusyAction('');
+    }
+  };
+
   const handleDeleteGoal = async () => {
     const confirmed = window.confirm('Delete this goal and all progress?');
     if (!confirmed) {
@@ -292,142 +319,38 @@ const GoalDetail = () => {
       </section>
 
       <section className="space-y-3">
-        {months.length === 0 ? (
-          <div className="surface-card p-6 text-sm text-slate-500">No monthly plans yet.</div>
-        ) : (
-          months.map((month) => {
-            const monthWeeks = weeksByMonth[month._id] || [];
-            const monthTasks = monthWeeks.flatMap((week) => tasksByWeek[week._id] || []);
-            const monthStats = computeStats(monthTasks);
-            const monthOpen = Boolean(openMonths[month._id]);
-            const weekForm = weekForms[month._id] || { weekNumber: '', description: '' };
-
-            return (
-              <article key={month._id} className="surface-card overflow-hidden">
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left sm:px-5"
-                  onClick={() => toggleMonth(month._id)}
-                >
-                  <div>
-                    <p className="text-base font-semibold text-slate-900">{month.monthName}</p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {monthStats.completed}/{monthStats.total} tasks completed • {monthStats.progress}%
-                    </p>
-                  </div>
-                  <span className="text-xs font-semibold text-slate-500">{monthOpen ? 'Hide' : 'Show'}</span>
-                </button>
-
-                {monthOpen ? (
-                  <div className="border-t border-slate-100 px-4 py-4 sm:px-5">
-                    <form
-                      onSubmit={(event) => handleCreateWeek(event, month._id)}
-                      className="mb-4 grid gap-2 sm:grid-cols-[120px_1fr_auto]"
-                    >
-                      <input
-                        type="number"
-                        min="1"
-                        max="53"
-                        className="input-base"
-                        placeholder="Week #"
-                        value={weekForm.weekNumber}
-                        onChange={(event) =>
-                          setWeekForms((prev) => ({
-                            ...prev,
-                            [month._id]: { ...weekForm, weekNumber: event.target.value }
-                          }))
-                        }
-                      />
-                      <input
-                        className="input-base"
-                        placeholder="Week focus"
-                        value={weekForm.description}
-                        onChange={(event) =>
-                          setWeekForms((prev) => ({
-                            ...prev,
-                            [month._id]: { ...weekForm, description: event.target.value }
-                          }))
-                        }
-                      />
-                      <button className="btn-secondary" disabled={busyAction === `week-${month._id}`}>
-                        {busyAction === `week-${month._id}` ? 'Saving...' : 'Add Week'}
-                      </button>
-                    </form>
-
-                    <div className="space-y-2">
-                      {monthWeeks.length === 0 ? (
-                        <p className="text-sm text-slate-500">No week plans yet.</p>
-                      ) : (
-                        monthWeeks.map((week) => {
-                          const weekTasks = tasksByWeek[week._id] || [];
-                          const weekStats = computeStats(weekTasks);
-                          const weekOpen = Boolean(openWeeks[week._id]);
-
-                          return (
-                            <div key={week._id} className="rounded-xl border border-slate-200 bg-slate-50/70">
-                              <button
-                                type="button"
-                                className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left sm:px-4"
-                                onClick={() => toggleWeek(week._id)}
-                              >
-                                <div>
-                                  <p className="text-sm font-semibold text-slate-800">Week {week.weekNumber}</p>
-                                  <p className="text-xs text-slate-500">
-                                    {weekStats.completed}/{weekStats.total} tasks • {weekStats.progress}%
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    className="btn-secondary px-2.5 py-1.5 text-xs"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      setEditingTask(null);
-                                      setSelectedWeekForTask(week._id);
-                                      setTaskModalOpen(true);
-                                    }}
-                                  >
-                                    Add Task
-                                  </button>
-                                  <span className="text-xs font-semibold text-slate-500">{weekOpen ? 'Hide' : 'Show'}</span>
-                                </div>
-                              </button>
-
-                              {weekOpen ? (
-                                <div className="border-t border-slate-200 px-3 py-3 sm:px-4">
-                                  {weekTasks.length === 0 ? (
-                                    <p className="text-sm text-slate-500">No tasks for this week.</p>
-                                  ) : (
-                                    <div className="space-y-2">
-                                      {weekTasks.map((task) => (
-                                        <TaskItem
-                                          key={task._id}
-                                          task={task}
-                                          busy={busyTaskId === task._id}
-                                          onToggle={() => handleToggleTask(task)}
-                                          onEdit={() => {
-                                            setEditingTask(task);
-                                            setSelectedWeekForTask(task.weekId);
-                                            setTaskModalOpen(true);
-                                          }}
-                                          onDelete={() => handleDeleteTask(task._id)}
-                                        />
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              ) : null}
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-              </article>
-            );
-          })
-        )}
+        <GoalPlanner
+          months={months}
+          weeksByMonth={weeksByMonth}
+          tasksByWeek={tasksByWeek}
+          weekForms={weekForms}
+          openMonths={openMonths}
+          openWeeks={openWeeks}
+          busyAction={busyAction}
+          busyTaskId={busyTaskId}
+          onToggleMonth={toggleMonth}
+          onToggleWeek={toggleWeek}
+          onChangeWeekForm={(monthId, nextForm) =>
+            setWeekForms((prev) => ({
+              ...prev,
+              [monthId]: nextForm
+            }))
+          }
+          onCreateWeek={handleCreateWeek}
+          onAddTask={(weekId) => {
+            setEditingTask(null);
+            setSelectedWeekForTask(weekId);
+            setTaskModalOpen(true);
+          }}
+          onToggleTask={handleToggleTask}
+          onEditTask={(task) => {
+            setEditingTask(task);
+            setSelectedWeekForTask(task.weekId);
+            setTaskModalOpen(true);
+          }}
+          onDeleteTask={handleDeleteTask}
+          onBulkCreateTasks={handleBulkCreateTasks}
+        />
       </section>
 
       <CreateTaskModal

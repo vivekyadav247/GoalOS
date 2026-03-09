@@ -1,4 +1,6 @@
-﻿const GoalCard = ({ title, category, progress = 0, tasksCompleted = 0, onClick, actions }) => {
+import { Target, CheckCircle2 } from 'lucide-react';
+
+const GoalCard = ({ title, category, progress = 0, tasksCompleted = 0, onClick, actions }) => {
   return (
     <article
       onClick={onClick}
@@ -8,13 +10,21 @@
       ].join(' ')}
     >
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-            {category || 'General'}
-          </p>
-          <h3 className="mt-3 text-base font-semibold leading-tight text-slate-900">{title}</h3>
+        <div className="flex items-start gap-2">
+          <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+            <Target className="h-4 w-4" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+              {category || 'General'}
+            </p>
+            <h3 className="mt-2 text-base font-semibold leading-tight text-slate-900">{title}</h3>
+          </div>
         </div>
-        <span className="text-xs font-medium text-slate-500">{tasksCompleted} tasks</span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
+          <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+          {tasksCompleted} tasks
+        </span>
       </div>
 
       <div className="mt-4">
