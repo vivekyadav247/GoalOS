@@ -76,6 +76,8 @@ const Navbar = () => {
     return { current, hasToday };
   }, [tasks]);
 
+  const hasStreak = streak.current > 0;
+
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 md:px-6">
@@ -106,8 +108,18 @@ const Navbar = () => {
             aria-label="Current streak"
             title="Current streak"
           >
-            <Flame className="h-5 w-5 text-orange-500" aria-hidden="true" />
-            <span className="text-xs font-semibold text-slate-700">{streak.current}</span>
+            <Flame
+              className={['h-5 w-5', hasStreak ? 'text-orange-500' : 'text-slate-300'].join(' ')}
+              aria-hidden="true"
+            />
+            <span
+              className={[
+                'text-xs font-semibold',
+                hasStreak ? 'text-slate-700' : 'text-slate-400'
+              ].join(' ')}
+            >
+              {streak.current}
+            </span>
           </div>
           <Show when="signed-in">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm">
