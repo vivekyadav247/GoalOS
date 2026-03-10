@@ -2,7 +2,7 @@
 
 const ProblemSection = () => {
   return (
-    <section className="surface-card p-5 sm:p-7" aria-labelledby="problem-heading">
+    <section className="surface-card p-5 sm:p-7" aria-labelledby="problem-heading" data-reveal="fade">
       <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Problem</p>
       <h2
         id="problem-heading"

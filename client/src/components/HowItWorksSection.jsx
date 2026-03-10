@@ -29,7 +29,7 @@ const HowItWorksSection = () => {
       className="grid gap-6 text-center lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center lg:text-left"
       aria-labelledby="how-it-works-heading"
     >
-      <div className="mx-auto max-w-xl lg:mx-0">
+      <div className="mx-auto max-w-xl lg:mx-0" data-reveal="left">
         <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">How <BrandName /> Works</p>
         <h2
           id="how-it-works-heading"
@@ -43,7 +43,7 @@ const HowItWorksSection = () => {
         </p>
       </div>
 
-      <div className="surface-card p-4 md:p-5">
+      <div className="surface-card p-4 md:p-5" data-reveal="right">
         <div className="space-y-2">
           {HIERARCHY.map((item, index) => (
             <div key={item.label}>

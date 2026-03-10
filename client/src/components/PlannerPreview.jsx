@@ -61,7 +61,7 @@ const expandedCells = columnMap.flatMap((dataCol) =>
 const PlannerPreview = () => {
   return (
     <section className="grid gap-6 text-center lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-center lg:gap-10 lg:text-left">
-      <div className="mx-auto max-w-xl lg:mx-0">
+      <div className="mx-auto max-w-xl lg:mx-0" data-reveal="left">
         <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Task Heatmap</p>
         <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 md:text-3xl">
           Visualize Your Consistency
@@ -73,7 +73,7 @@ const PlannerPreview = () => {
         </p>
       </div>
 
-      <div className="surface-card border-slate-200 bg-white/90 p-3 sm:p-4 md:p-5">
+      <div className="surface-card border-slate-200 bg-white/90 p-3 sm:p-4 md:p-5" data-reveal="right">
         <div className="space-y-1 text-xs text-slate-600 sm:text-sm">
           <p>🔥 Current streak: 5 days</p>
           <p>🔥 Best streak: 12 days</p>

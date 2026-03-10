@@ -3,7 +3,10 @@ import { Link } from 'react-router-dom';
 
 const CTASection = () => {
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 px-6 py-10 text-white shadow-[0_22px_70px_-32px_rgba(37,99,235,0.85)] md:px-10">
+    <section
+      className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 px-6 py-10 text-white shadow-[0_22px_70px_-32px_rgba(37,99,235,0.85)] md:px-10"
+      data-reveal="pop"
+    >
       <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_0%_0%,rgba(255,255,255,0.35),transparent_55%)]" />
       <div className="relative z-10 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
         <div>

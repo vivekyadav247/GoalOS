@@ -2,7 +2,7 @@
 
 const ProductivityPhilosophy = () => {
   return (
-    <section className="surface-card p-5 md:p-7" aria-labelledby="philosophy-heading">
+    <section className="surface-card p-5 md:p-7" aria-labelledby="philosophy-heading" data-reveal="fade">
       <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Productivity Philosophy</p>
       <h2 id="philosophy-heading" className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 md:text-3xl">
         Consistency beats intensity.

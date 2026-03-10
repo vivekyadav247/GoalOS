@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import LandingNavbar from '../components/LandingNavbar';
 import HeroSection from '../components/HeroSection';
 import ProblemSection from '../components/ProblemSection';
@@ -14,6 +14,45 @@ const LandingPage = () => {
   const featuresRef = useRef(null);
   const howRef = useRef(null);
   const productivityRef = useRef(null);
+
+  useEffect(() => {
+    const revealTargets = Array.from(document.querySelectorAll('[data-reveal]'));
+    if (revealTargets.length === 0) {
+      return undefined;
+    }
+
+    document.body.classList.add('reveal-enabled');
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      revealTargets.forEach((element) => element.classList.add('is-visible'));
+      return () => {
+        document.body.classList.remove('reveal-enabled');
+      };
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.2,
+        rootMargin: '0px 0px -12% 0px'
+      }
+    );
+
+    revealTargets.forEach((element) => observer.observe(element));
+
+    return () => {
+      observer.disconnect();
+      document.body.classList.remove('reveal-enabled');
+    };
+  }, []);
 
   const scrollToSection = (ref) => {
     if (ref.current) {

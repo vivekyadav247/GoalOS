@@ -71,6 +71,49 @@ body {
   animation: orb-float 9s ease-in-out infinite;
 }
 
+.reveal-enabled [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0) scale(0.98);
+  filter: blur(2px);
+  transition:
+    opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0s);
+  will-change: opacity, transform, filter;
+}
+
+.reveal-enabled [data-reveal='left'] {
+  transform: translate3d(-32px, 0, 0) scale(0.98);
+}
+
+.reveal-enabled [data-reveal='right'] {
+  transform: translate3d(32px, 0, 0) scale(0.98);
+}
+
+.reveal-enabled [data-reveal='scale'] {
+  transform: scale(0.95);
+}
+
+.reveal-enabled [data-reveal='pop'] {
+  transform: translate3d(0, 18px, 0) scale(0.94);
+}
+
+.reveal-enabled [data-reveal].is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-enabled [data-reveal] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+}
+
 .logo-hover .logo-mark {
   transition: transform 0.2s ease;
 }

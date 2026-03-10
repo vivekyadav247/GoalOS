@@ -5,7 +5,7 @@ const Footer = () => {
   return (
     <footer className="border-t border-slate-200/80 bg-white/90">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 text-center md:grid-cols-3 md:text-left md:px-6 lg:px-8">
-        <div className="mx-auto md:mx-0">
+        <div className="mx-auto md:mx-0" data-reveal style={{ '--reveal-delay': '0s' }}>
           <BrandName className="text-base font-semibold text-slate-900" />
           <p className="mt-2 text-sm text-slate-600">Goal planning system for daily execution.</p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500 md:justify-start">
@@ -21,12 +21,12 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mx-auto md:mx-0">
+        <div className="mx-auto md:mx-0" data-reveal style={{ '--reveal-delay': '0.08s' }}>
           <p className="text-sm font-semibold text-slate-900">Developer</p>
           <p className="mt-2 text-sm text-slate-600">Vivek Yadav</p>
         </div>
 
-        <div className="mx-auto md:mx-0">
+        <div className="mx-auto md:mx-0" data-reveal style={{ '--reveal-delay': '0.16s' }}>
           <p className="text-sm font-semibold text-slate-900">Connect</p>
           <ul className="mt-2 space-y-2 text-sm text-slate-600">
             <li>
