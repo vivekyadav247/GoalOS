@@ -4,11 +4,6 @@ import {
   BarChart,
   Line,
   LineChart,
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -249,7 +244,7 @@ const Analytics = () => {
 
       {error ? <div className="surface-card p-4 text-sm text-rose-700">{error}</div> : null}
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
         <ProgressCard
           title="Total Goals"
           value={filteredGoals.length}
@@ -304,76 +299,85 @@ const Analytics = () => {
           </GraphCard>
 
           <GraphCard title="Weekly progress" subtitle="Completion percentage" className="h-[340px]">
-            <ResponsiveContainer width="100%" height="88%">
-              <LineChart data={weeklyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                <XAxis
-                  dataKey="label"
-                  axisLine={{ stroke: '#e2e8f0' }}
-                  tickLine={false}
-                  tickMargin={8}
-                  tick={{ fill: '#64748b', fontSize: 12 }}
-                />
-                <YAxis
-                  domain={[0, 100]}
-                  axisLine={{ stroke: '#e2e8f0' }}
-                  tickLine={false}
-                  tickMargin={8}
-                  ticks={[0, 25, 50, 75, 100]}
-                  tickFormatter={(value) => `${value}%`}
-                  tick={{ fill: '#64748b', fontSize: 11 }}
-                />
-                <Tooltip
-                  cursor={{ stroke: '#e2e8f0', strokeDasharray: '4 4' }}
-                  contentStyle={{
-                    borderRadius: 12,
-                    borderColor: '#e2e8f0',
-                    fontSize: 12
-                  }}
-                  formatter={(value) => [`${value}%`, 'Completion']}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#0ea5e9"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: '#fff', stroke: '#0ea5e9', strokeWidth: 2 }}
-                  activeDot={{ r: 6, fill: '#0ea5e9' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {weeklyData.length === 0 ? (
+              <p className="text-sm text-slate-500">No progress yet for this range.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height="88%">
+                <LineChart data={weeklyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                  <XAxis
+                    dataKey="label"
+                    axisLine={{ stroke: '#e2e8f0' }}
+                    tickLine={false}
+                    tickMargin={8}
+                    tick={{ fill: '#64748b', fontSize: 12 }}
+                  />
+                  <YAxis
+                    domain={[0, 100]}
+                    axisLine={{ stroke: '#e2e8f0' }}
+                    tickLine={false}
+                    tickMargin={8}
+                    ticks={[0, 25, 50, 75, 100]}
+                    tickFormatter={(value) => `${value}%`}
+                    tick={{ fill: '#64748b', fontSize: 11 }}
+                  />
+                  <Tooltip
+                    cursor={{ stroke: '#e2e8f0', strokeDasharray: '4 4' }}
+                    contentStyle={{
+                      borderRadius: 12,
+                      borderColor: '#e2e8f0',
+                      fontSize: 12
+                    }}
+                    formatter={(value) => [`${value}%`, 'Completion']}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#0ea5e9"
+                    strokeWidth={3}
+                    dot={{ r: 4, fill: '#fff', stroke: '#0ea5e9', strokeWidth: 2 }}
+                    activeDot={{ r: 6, fill: '#0ea5e9' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </GraphCard>
 
-          <GraphCard title="Goal performance radar" subtitle="Completion percentage by goal" className="h-[380px]">
+          <GraphCard title="Goal performance" subtitle="Completion percentage by goal" className="h-[380px]">
             {categoryData.length === 0 ? (
               <p className="text-sm text-slate-500">No data yet.</p>
             ) : (
               <ResponsiveContainer width="100%" height="88%">
-                <RadarChart data={categoryData} outerRadius="78%">
+                <BarChart
+                  data={categoryData}
+                  layout="vertical"
+                  margin={{ top: 8, right: 16, left: 24, bottom: 0 }}
+                >
                   <defs>
-                    <linearGradient id="goalRadar" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#2563eb" stopOpacity={0.45} />
-                      <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.15} />
+                    <linearGradient id="goalBarGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#2563eb" />
+                      <stop offset="100%" stopColor="#38bdf8" />
                     </linearGradient>
                   </defs>
-                  <PolarGrid radialLines={false} stroke="transparent" />
-                  <PolarAngleAxis
-                    dataKey="category"
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: '#94a3b8' }}
-                    tickFormatter={(value) => (String(value).length > 12 ? `${String(value).slice(0, 12)}...` : value)}
-                  />
-                  <PolarRadiusAxis
+                  <XAxis
+                    type="number"
                     domain={[0, 100]}
-                    tick={false}
-                    axisLine={false}
+                    axisLine={{ stroke: '#e2e8f0' }}
+                    tickLine={false}
+                    tickMargin={8}
+                    ticks={[0, 25, 50, 75, 100]}
+                    tickFormatter={(value) => `${value}%`}
+                    tick={{ fill: '#64748b', fontSize: 11 }}
                   />
-                  <Radar
-                    dataKey="value"
-                    stroke="#2563eb"
-                    strokeWidth={2.5}
-                    fill="url(#goalRadar)"
-                    fillOpacity={1}
-                    dot={{ r: 3.5, fill: '#fff', stroke: '#2563eb', strokeWidth: 2 }}
+                  <YAxis
+                    type="category"
+                    dataKey="category"
+                    width={90}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#64748b', fontSize: 12 }}
+                    tickFormatter={(value) =>
+                      String(value).length > 12 ? `${String(value).slice(0, 12)}...` : value
+                    }
                   />
                   <Tooltip
                     contentStyle={{
@@ -383,7 +387,8 @@ const Analytics = () => {
                     }}
                     formatter={(value) => [`${value}%`, 'Completion']}
                   />
-                </RadarChart>
+                  <Bar dataKey="value" fill="url(#goalBarGradient)" radius={[8, 8, 8, 8]} barSize={18} />
+                </BarChart>
               </ResponsiveContainer>
             )}
           </GraphCard>

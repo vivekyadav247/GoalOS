@@ -479,43 +479,47 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </GraphCard>
         <GraphCard title="Weekly progress" subtitle="Completion percentage by week" className="h-[340px]">
-          <ResponsiveContainer width="100%" height="88%">
-            <LineChart data={weeklyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-              <XAxis
-                dataKey="label"
-                axisLine={{ stroke: '#e2e8f0' }}
-                tickLine={false}
-                tickMargin={8}
-                tick={{ fill: '#64748b', fontSize: 12 }}
-              />
-              <YAxis
-                domain={[0, 100]}
-                axisLine={{ stroke: '#e2e8f0' }}
-                tickLine={false}
-                tickMargin={8}
-                ticks={[0, 25, 50, 75, 100]}
-                tickFormatter={(value) => `${value}%`}
-                tick={{ fill: '#64748b', fontSize: 11 }}
-              />
-              <Tooltip
-                cursor={{ stroke: '#e2e8f0', strokeDasharray: '4 4' }}
-                contentStyle={{
-                  borderRadius: 12,
-                  borderColor: '#e2e8f0',
-                  fontSize: 12
-                }}
-                formatter={(value) => [`${value}%`, 'Completion']}
-              />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="#0ea5e9"
-                strokeWidth={3}
-                dot={{ r: 4, fill: '#fff', stroke: '#0ea5e9', strokeWidth: 2 }}
-                activeDot={{ r: 6, fill: '#0ea5e9' }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          {weeklyData.length === 0 ? (
+            <p className="text-sm text-slate-500">No progress yet for this range.</p>
+          ) : (
+            <ResponsiveContainer width="100%" height="88%">
+              <LineChart data={weeklyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                <XAxis
+                  dataKey="label"
+                  axisLine={{ stroke: '#e2e8f0' }}
+                  tickLine={false}
+                  tickMargin={8}
+                  tick={{ fill: '#64748b', fontSize: 12 }}
+                />
+                <YAxis
+                  domain={[0, 100]}
+                  axisLine={{ stroke: '#e2e8f0' }}
+                  tickLine={false}
+                  tickMargin={8}
+                  ticks={[0, 25, 50, 75, 100]}
+                  tickFormatter={(value) => `${value}%`}
+                  tick={{ fill: '#64748b', fontSize: 11 }}
+                />
+                <Tooltip
+                  cursor={{ stroke: '#e2e8f0', strokeDasharray: '4 4' }}
+                  contentStyle={{
+                    borderRadius: 12,
+                    borderColor: '#e2e8f0',
+                    fontSize: 12
+                  }}
+                  formatter={(value) => [`${value}%`, 'Completion']}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#0ea5e9"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: '#fff', stroke: '#0ea5e9', strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: '#0ea5e9' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </GraphCard>
       </section>
 

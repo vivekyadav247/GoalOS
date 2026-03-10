@@ -16,16 +16,16 @@ const ProgressCard = ({ title, value, subtitle, tone = 'blue' }) => {
   };
 
   return (
-    <article className="surface-card p-4 md:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{title}</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">{value}</p>
-          {subtitle && <p className="mt-2 text-xs text-slate-500">{subtitle}</p>}
+    <article className="surface-card p-3 text-center md:p-5 md:text-left">
+      <div className="flex flex-col items-center justify-between gap-2 md:flex-row md:items-start md:gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">{title}</p>
+          <p className="mt-1 text-lg font-semibold text-slate-900 md:mt-2 md:text-2xl">{value}</p>
+          {subtitle && <p className="mt-1 text-[10px] text-slate-500 md:mt-2 md:text-xs">{subtitle}</p>}
         </div>
         <span
           className={[
-            'inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-xs font-semibold',
+            'inline-flex h-7 w-7 items-center justify-center rounded-lg md:h-8 md:w-8',
             toneStyles[tone] || toneStyles.blue
           ].join(' ')}
         >
