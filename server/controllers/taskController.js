@@ -206,16 +206,11 @@ const updateTask = async (req, res) => {
     }
     if (req.body.completed !== undefined) {
       if (req.body.completed && !task.completed) {
-        const taskDateKey = toDateKey(task.date);
-        const clientDateKey =
-          typeof req.body.clientDate === 'string' ? req.body.clientDate.slice(0, 10) : '';
-        const todayKey = toDateKey(new Date());
-        const expectedKey = clientDateKey || todayKey;
+        const todayKey = new Date().toISOString().split('T')[0];
+        const taskDateKey = new Date(task.date).toISOString().split('T')[0];
 
-        if (!taskDateKey || taskDateKey !== expectedKey) {
-          return res
-            .status(400)
-            .json({ message: 'Tasks can only be completed on their scheduled date' });
+        if (taskDateKey > todayKey) {
+          return res.status(400).json({ message: 'Future tasks cannot be completed' });
         }
       }
 
