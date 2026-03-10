@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import CreateTaskModal from '../components/CreateTaskModal';
 import GoalPlanner from '../components/GoalPlanner';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { getApiErrorMessage, goalApi, taskApi } from '../services/api';
 import useGoalHierarchy from '../hooks/useGoalHierarchy';
 
@@ -29,6 +30,8 @@ const GoalDetail = () => {
   const [busyAction, setBusyAction] = useState('');
   const [actionError, setActionError] = useState('');
   const [selectedDateForTask, setSelectedDateForTask] = useState('');
+  const [deleteTaskDialog, setDeleteTaskDialog] = useState({ open: false, taskId: null });
+  const [deleteGoalDialogOpen, setDeleteGoalDialogOpen] = useState(false);
 
   const weekRefs = useRef({});
   const hasAutoScrolledRef = useRef(false);
@@ -308,11 +311,6 @@ const GoalDetail = () => {
   };
 
   const handleDeleteTask = async (taskId) => {
-    const confirmed = window.confirm('Delete this task?');
-    if (!confirmed) {
-      return;
-    }
-
     setBusyTaskId(taskId);
     setActionError('');
 
@@ -356,11 +354,6 @@ const GoalDetail = () => {
   };
 
   const handleDeleteGoal = async () => {
-    const confirmed = window.confirm('Delete this goal and all progress?');
-    if (!confirmed) {
-      return;
-    }
-
     setBusyAction('goal-delete');
     setActionError('');
 
@@ -419,7 +412,7 @@ const GoalDetail = () => {
           </button>
           <button
             className="rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-60"
-            onClick={handleDeleteGoal}
+            onClick={() => setDeleteGoalDialogOpen(true)}
             disabled={busyAction === 'goal-delete'}
           >
             {busyAction === 'goal-delete' ? 'Deleting...' : 'Delete Goal'}
@@ -429,7 +422,7 @@ const GoalDetail = () => {
 
       {actionError ? <div className="surface-card p-4 text-sm text-rose-700">{actionError}</div> : null}
 
-      <section className="surface-card p-4 sm:p-5">
+      <section className="surface-card p-4 md:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-slate-900">Planner timeline</h3>
@@ -437,7 +430,7 @@ const GoalDetail = () => {
               Months and weeks are generated automatically from the goal date range.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm">
             <button
               type="button"
               className="btn-secondary px-3 py-1.5 text-xs"
@@ -492,7 +485,7 @@ const GoalDetail = () => {
             );
             setTaskModalOpen(true);
           }}
-          onDeleteTask={handleDeleteTask}
+          onDeleteTask={(taskId) => setDeleteTaskDialog({ open: true, taskId })}
           todayWeekId={todayWeekId}
           onWeekRef={registerWeekRef}
         />
@@ -508,6 +501,31 @@ const GoalDetail = () => {
           setSelectedDateForTask('');
         }}
         onSubmit={handleSaveTask}
+      />
+      <ConfirmDialog
+        open={deleteTaskDialog.open}
+        title="Delete task?"
+        message="This action cannot be undone."
+        confirmLabel="Delete"
+        onCancel={() => setDeleteTaskDialog({ open: false, taskId: null })}
+        onConfirm={() => {
+          const taskId = deleteTaskDialog.taskId;
+          setDeleteTaskDialog({ open: false, taskId: null });
+          if (taskId) {
+            handleDeleteTask(taskId);
+          }
+        }}
+      />
+      <ConfirmDialog
+        open={deleteGoalDialogOpen}
+        title="Delete goal?"
+        message="This will remove the goal and all progress."
+        confirmLabel="Delete"
+        onCancel={() => setDeleteGoalDialogOpen(false)}
+        onConfirm={() => {
+          setDeleteGoalDialogOpen(false);
+          handleDeleteGoal();
+        }}
       />
     </div>
   );

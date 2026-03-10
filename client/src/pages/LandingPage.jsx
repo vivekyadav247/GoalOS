@@ -1,11 +1,9 @@
 import { useRef } from 'react';
 import LandingNavbar from '../components/LandingNavbar';
 import HeroSection from '../components/HeroSection';
-import ProblemSection from '../components/ProblemSection';
 import HowItWorksSection from '../components/HowItWorksSection';
 import PlannerPreview from '../components/PlannerPreview';
 import FeaturesSection from '../components/FeaturesSection';
-import CTASection from '../components/CTASection';
 import Footer from '../components/Footer';
 
 const LandingPage = () => {
@@ -25,12 +23,8 @@ const LandingPage = () => {
         onHowItWorksClick={() => scrollToSection(howRef)}
       />
 
-      <main className="mx-auto max-w-6xl space-y-16 px-4 pb-16 pt-10 sm:space-y-20 sm:px-6 sm:pt-14 lg:px-8 lg:pb-24">
-        <HeroSection onSeeHowItWorks={() => scrollToSection(howRef)} />
-
-        <section id="problem">
-          <ProblemSection />
-        </section>
+      <main className="mx-auto max-w-6xl space-y-14 px-4 pb-16 pt-10 text-center md:space-y-20 md:px-6 md:pt-14 lg:px-8 lg:pb-24">
+        <HeroSection onViewFeatures={() => scrollToSection(featuresRef)} />
 
         <section id="how-it-works" ref={howRef}>
           <HowItWorksSection />
@@ -42,10 +36,6 @@ const LandingPage = () => {
 
         <section id="features" ref={featuresRef}>
           <FeaturesSection />
-        </section>
-
-        <section id="cta">
-          <CTASection />
         </section>
       </main>
 

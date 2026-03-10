@@ -16,7 +16,7 @@ const ProgressCard = ({ title, value, subtitle, tone = 'blue' }) => {
   };
 
   return (
-    <article className="surface-card p-4 sm:p-5">
+    <article className="surface-card p-4 md:p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{title}</p>
@@ -40,4 +40,3 @@ const ProgressCard = ({ title, value, subtitle, tone = 'blue' }) => {
 };
 
 export default ProgressCard;
-

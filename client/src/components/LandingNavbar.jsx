@@ -24,7 +24,7 @@ const LandingNavbar = ({ onFeaturesClick, onHowItWorksClick }) => {
             onClick={onFeaturesClick}
             className="hidden text-sm font-medium text-slate-600 transition hover:text-slate-900 sm:inline-flex"
           >
-            Features
+            View Features
           </button>
           <button
             type="button"
@@ -42,8 +42,8 @@ const LandingNavbar = ({ onFeaturesClick, onHowItWorksClick }) => {
             GitHub
           </a>
           <SignUpButton mode="modal">
-            <button type="button" className="btn-primary">
-              Get Started
+            <button type="button" className="btn-primary px-5 py-2.5">
+              Start Planning
             </button>
           </SignUpButton>
         </nav>

@@ -3,18 +3,18 @@ import { Instagram, Linkedin, Github } from 'lucide-react';
 const Footer = () => {
   return (
     <footer className="border-t border-slate-200/80 bg-white/90">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:grid-cols-3 sm:px-6 lg:px-8">
-        <div>
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 text-center md:grid-cols-3 md:text-left md:px-6 lg:px-8">
+        <div className="mx-auto md:mx-0">
           <p className="text-base font-semibold text-slate-900">GoalOS</p>
-          <p className="mt-2 text-sm text-slate-600">Goal based productivity planner</p>
+          <p className="mt-2 text-sm text-slate-600">Goal planning system for daily execution.</p>
         </div>
 
-        <div>
+        <div className="mx-auto md:mx-0">
           <p className="text-sm font-semibold text-slate-900">Developer</p>
-          <p className="mt-2 text-sm text-slate-600">Built by Vivek Yadav</p>
+          <p className="mt-2 text-sm text-slate-600">Vivek Yadav</p>
         </div>
 
-        <div>
+        <div className="mx-auto md:mx-0">
           <p className="text-sm font-semibold text-slate-900">Connect</p>
           <ul className="mt-2 space-y-2 text-sm text-slate-600">
             <li>

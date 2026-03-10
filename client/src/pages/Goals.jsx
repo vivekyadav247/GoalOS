@@ -1,7 +1,8 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import GoalCard from '../components/GoalCard';
 import CreateGoalModal from '../components/CreateGoalModal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { getApiErrorMessage, goalApi } from '../services/api';
 import usePlannerData from '../hooks/usePlannerData';
 
@@ -20,6 +21,7 @@ const Goals = () => {
   const [modalLoading, setModalLoading] = useState(false);
   const [actionError, setActionError] = useState('');
   const [deletingGoalId, setDeletingGoalId] = useState('');
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, goalId: null });
 
   const goalStats = useMemo(() => {
     const byGoal = {};
@@ -64,11 +66,6 @@ const Goals = () => {
   };
 
   const handleDeleteGoal = async (goalId) => {
-    const confirmed = window.confirm('Delete this goal? This cannot be undone.');
-    if (!confirmed) {
-      return;
-    }
-
     setDeletingGoalId(goalId);
     setActionError('');
 
@@ -108,7 +105,7 @@ const Goals = () => {
       ) : goals.length === 0 ? (
         <div className="surface-card p-6 text-sm text-slate-500">No goals available yet.</div>
       ) : (
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {goals.map((goal) => {
             const stats = goalStats[goal._id] || { total: 0, completed: 0 };
             const progress = stats.total ? Math.round((stats.completed / stats.total) * 100) : 0;
@@ -140,7 +137,7 @@ const Goals = () => {
                       disabled={deletingGoalId === goal._id}
                       onClick={(event) => {
                         event.stopPropagation();
-                        handleDeleteGoal(goal._id);
+                        setDeleteDialog({ open: true, goalId: goal._id });
                       }}
                     >
                       {deletingGoalId === goal._id ? 'Deleting...' : 'Delete'}
@@ -163,9 +160,22 @@ const Goals = () => {
         }}
         onSubmit={handleSaveGoal}
       />
+      <ConfirmDialog
+        open={deleteDialog.open}
+        title="Delete goal?"
+        message="This will remove the goal and its progress."
+        confirmLabel="Delete"
+        onCancel={() => setDeleteDialog({ open: false, goalId: null })}
+        onConfirm={() => {
+          const goalId = deleteDialog.goalId;
+          setDeleteDialog({ open: false, goalId: null });
+          if (goalId) {
+            handleDeleteGoal(goalId);
+          }
+        }}
+      />
     </div>
   );
 };
 
 export default Goals;
-

@@ -11,10 +11,11 @@ import {
   XAxis,
   YAxis
 } from 'recharts';
-import ProgressCard from '../components/ProgressCard';
 import GraphCard from '../components/GraphCard';
 import TaskItem from '../components/TaskItem';
 import GoalCard from '../components/GoalCard';
+import TaskHeatmap from '../components/TaskHeatmap';
+import ConfirmDialog from '../components/ConfirmDialog';
 import CreateGoalModal from '../components/CreateGoalModal';
 import CreateTaskModal from '../components/CreateTaskModal';
 import { getApiErrorMessage, goalApi, taskApi } from '../services/api';
@@ -30,6 +31,17 @@ const computeProgress = (tasks = []) => {
   return Math.round((completed / tasks.length) * 100);
 };
 
+const toDateKey = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const Dashboard = () => {
   const { user } = useUser();
   const { goals, tasks, loading, error, refresh } = usePlannerData();
@@ -38,13 +50,15 @@ const Dashboard = () => {
   const [modalError, setModalError] = useState('');
   const [goalModalOpen, setGoalModalOpen] = useState(false);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, taskId: null });
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
   }, []);
 
   const goalStats = useMemo(() => {
@@ -69,13 +83,10 @@ const Dashboard = () => {
 
   const summary = useMemo(() => {
     const completedTasks = tasks.filter((task) => task.completed).length;
-    const totalTasks = tasks.length;
 
     return {
       totalGoals: goals.length,
-      totalTasks,
-      completedTasks,
-      completionRate: totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0
+      completedTasks
     };
   }, [goals.length, tasks]);
 
@@ -111,6 +122,34 @@ const Dashboard = () => {
         return date >= start && date < end;
       })
       .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+  }, [tasks]);
+
+  const activeStreak = useMemo(() => {
+    const completedDays = new Set(
+      tasks
+        .filter((task) => task.completed && task.date)
+        .map((task) => toDateKey(task.date))
+        .filter(Boolean)
+    );
+
+    if (completedDays.size === 0) {
+      return 0;
+    }
+
+    let streak = 0;
+    const cursor = new Date();
+    cursor.setHours(0, 0, 0, 0);
+
+    while (true) {
+      const key = toDateKey(cursor);
+      if (!completedDays.has(key)) {
+        break;
+      }
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+
+    return streak;
   }, [tasks]);
 
   const dailyData = useMemo(
@@ -184,33 +223,56 @@ const Dashboard = () => {
     }
   };
 
-  const handleCreateTask = async (payload) => {
+  const handleDeleteTask = async (taskId) => {
+    setBusyTaskId(taskId);
+    setModalError('');
+
+    try {
+      await taskApi.remove(taskId);
+      await refresh();
+    } catch (err) {
+      setModalError(getApiErrorMessage(err, 'Unable to delete task'));
+    } finally {
+      setBusyTaskId('');
+    }
+  };
+
+  const handleSaveTask = async (payload) => {
     setModalLoading(true);
     setModalError('');
 
     try {
-      if (!payload.goalId) {
-        throw new Error('Select a goal before creating a task');
+      if (editingTask?._id) {
+        await taskApi.update(editingTask._id, {
+          title: payload.title,
+          date: payload.date
+        });
+      } else {
+        if (!payload.goalId) {
+          throw new Error('Select a goal before creating a task');
+        }
+        await taskApi.create({
+          goalId: payload.goalId,
+          title: payload.title,
+          date: payload.date
+        });
       }
-      await taskApi.create({
-        goalId: payload.goalId,
-        title: payload.title,
-        date: payload.date
-      });
+
       setTaskModalOpen(false);
+      setEditingTask(null);
       await refresh();
     } catch (err) {
-      setModalError(getApiErrorMessage(err, 'Unable to create task'));
+      setModalError(getApiErrorMessage(err, 'Unable to save task'));
     } finally {
       setModalLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <section className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="page-title">
+          <h2 className="page-title text-2xl md:text-3xl">
             {greeting},{' '}
             <span className="text-blue-700">
               {user?.firstName || user?.username || 'Planner'}
@@ -227,6 +289,7 @@ const Dashboard = () => {
                 setModalError('Create a goal first, then add tasks.');
                 return;
               }
+              setEditingTask(null);
               setTaskModalOpen(true);
             }}
           >
@@ -241,7 +304,32 @@ const Dashboard = () => {
       {error ? <div className="surface-card p-4 text-sm text-rose-700">{error}</div> : null}
       {modalError ? <div className="surface-card p-4 text-sm text-rose-700">{modalError}</div> : null}
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Goals</p>
+          <p className="mt-3 text-2xl font-semibold text-slate-900">{summary.totalGoals}</p>
+          <p className="mt-1 text-xs text-slate-500">Active focus areas</p>
+        </article>
+        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Tasks Today</p>
+          <p className="mt-3 text-2xl font-semibold text-slate-900">{todaysTasks.length}</p>
+          <p className="mt-1 text-xs text-slate-500">Scheduled for today</p>
+        </article>
+        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Completed Tasks</p>
+          <p className="mt-3 text-2xl font-semibold text-slate-900">{summary.completedTasks}</p>
+          <p className="mt-1 text-xs text-slate-500">Marked as done</p>
+        </article>
+        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Active Streak</p>
+          <p className="mt-3 text-2xl font-semibold text-slate-900">{activeStreak}</p>
+          <p className="mt-1 text-xs text-slate-500">{activeStreak === 1 ? 'Day in a row' : 'Days in a row'}</p>
+        </article>
+      </section>
+
+      <TaskHeatmap tasks={tasks} />
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {loading ? (
           <div className="surface-card p-5 text-sm text-slate-500">Loading goal cards...</div>
         ) : goalCards.length === 0 ? (
@@ -261,55 +349,9 @@ const Dashboard = () => {
         )}
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <ProgressCard title="Total Goals" value={summary.totalGoals} subtitle="Active focus areas" tone="blue" />
-        <ProgressCard title="Total Tasks" value={summary.totalTasks} subtitle="Across all plans" tone="slate" />
-        <ProgressCard title="Completed" value={summary.completedTasks} subtitle="Tasks marked done" tone="emerald" />
-        <ProgressCard title="Completion Rate" value={`${summary.completionRate}%`} subtitle="Overall task progress" tone="amber" />
-      </section>
-
       <section className="grid gap-4 xl:grid-cols-2">
-        <GraphCard title="Daily productivity" subtitle="Completed tasks by weekday" className="h-[340px]">
-          <ResponsiveContainer width="100%" height="88%">
-            <BarChart data={dailyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="label" stroke="#64748b" />
-              <YAxis stroke="#64748b" />
-              <Tooltip />
-              <Bar dataKey="value" fill="#2563eb" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </GraphCard>
-
-        <GraphCard title="Weekly progress" subtitle="Completion percentage by week" className="h-[340px]">
-          <ResponsiveContainer width="100%" height="88%">
-            <LineChart data={weeklyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="label" stroke="#64748b" />
-              <YAxis stroke="#64748b" domain={[0, 100]} />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="#10b981"
-                strokeWidth={2.5}
-                dot={{ r: 4, fill: '#10b981' }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </GraphCard>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-2">
-        <GraphCard
-          title="Today's tasks"
-          subtitle={new Date().toLocaleDateString(undefined, {
-            weekday: 'long',
-            month: 'short',
-            day: 'numeric'
-          })}
-        >
-          <div className="space-y-2">
+        <GraphCard title="Today's Tasks" subtitle="Your plan for today">
+          <div className="space-y-3">
             {loading ? (
               <p className="text-sm text-slate-500">Loading tasks...</p>
             ) : todaysTasks.length === 0 ? (
@@ -321,6 +363,11 @@ const Dashboard = () => {
                   task={task}
                   busy={busyTaskId === task._id}
                   onToggle={() => handleToggleTask(task)}
+                  onEdit={() => {
+                    setEditingTask(task);
+                    setTaskModalOpen(true);
+                  }}
+                  onDelete={() => setDeleteDialog({ open: true, taskId: task._id })}
                 />
               ))
             )}
@@ -356,6 +403,37 @@ const Dashboard = () => {
         </GraphCard>
       </section>
 
+      <section className="grid gap-4 xl:grid-cols-2">
+        <GraphCard title="Daily productivity" subtitle="Completed tasks by weekday" className="h-[340px]">
+          <ResponsiveContainer width="100%" height="88%">
+            <BarChart data={dailyData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="label" stroke="#64748b" />
+              <YAxis stroke="#64748b" />
+              <Tooltip />
+              <Bar dataKey="value" fill="#2563eb" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </GraphCard>
+        <GraphCard title="Weekly progress" subtitle="Completion percentage by week" className="h-[340px]">
+          <ResponsiveContainer width="100%" height="88%">
+            <LineChart data={weeklyData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="label" stroke="#64748b" />
+              <YAxis stroke="#64748b" domain={[0, 100]} />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#10b981"
+                strokeWidth={2.5}
+                dot={{ r: 4, fill: '#10b981' }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </GraphCard>
+      </section>
+
       <CreateGoalModal
         open={goalModalOpen}
         loading={modalLoading}
@@ -365,10 +443,28 @@ const Dashboard = () => {
       <CreateTaskModal
         open={taskModalOpen}
         loading={modalLoading}
+        initialValue={editingTask}
         goalOptions={goalOptions}
-        requireGoal
-        onClose={() => setTaskModalOpen(false)}
-        onSubmit={handleCreateTask}
+        requireGoal={!editingTask}
+        onClose={() => {
+          setTaskModalOpen(false);
+          setEditingTask(null);
+        }}
+        onSubmit={handleSaveTask}
+      />
+      <ConfirmDialog
+        open={deleteDialog.open}
+        title="Delete task?"
+        message="This action cannot be undone."
+        confirmLabel="Delete"
+        onCancel={() => setDeleteDialog({ open: false, taskId: null })}
+        onConfirm={() => {
+          const taskId = deleteDialog.taskId;
+          setDeleteDialog({ open: false, taskId: null });
+          if (taskId) {
+            handleDeleteTask(taskId);
+          }
+        }}
       />
     </div>
   );

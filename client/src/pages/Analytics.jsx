@@ -167,7 +167,7 @@ const Analytics = () => {
 
       {error ? <div className="surface-card p-4 text-sm text-rose-700">{error}</div> : null}
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <ProgressCard title="Total Goals" value={goals.length} subtitle="Goals in workspace" tone="blue" />
         <ProgressCard title="Months Planned" value={monthCount} subtitle="Months touched by plans" tone="slate" />
         <ProgressCard title="Task Weeks" value={weeklyData.length} subtitle="Active execution weeks" tone="amber" />
@@ -208,17 +208,46 @@ const Analytics = () => {
             </ResponsiveContainer>
           </GraphCard>
 
-          <GraphCard title="Goal performance radar" subtitle="Completion percentage by goal" className="h-[360px]">
+          <GraphCard title="Goal performance radar" subtitle="Completion percentage by goal" className="h-[380px]">
             {categoryData.length === 0 ? (
               <p className="text-sm text-slate-500">No data yet.</p>
             ) : (
               <ResponsiveContainer width="100%" height="88%">
-                <RadarChart data={categoryData}>
-                  <PolarGrid stroke="#e2e8f0" />
-                  <PolarAngleAxis dataKey="category" stroke="#64748b" />
-                  <PolarRadiusAxis stroke="#cbd5e1" domain={[0, 100]} />
-                  <Radar dataKey="value" stroke="#2563eb" fill="#93c5fd" fillOpacity={0.55} />
-                  <Tooltip />
+                <RadarChart data={categoryData} outerRadius="72%">
+                  <defs>
+                    <linearGradient id="goalRadar" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#2563eb" stopOpacity={0.6} />
+                      <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.3} />
+                    </linearGradient>
+                  </defs>
+                  <PolarGrid stroke="#e2e8f0" radialLines />
+                  <PolarAngleAxis
+                    dataKey="category"
+                    stroke="#64748b"
+                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    tickFormatter={(value) => (String(value).length > 12 ? `${String(value).slice(0, 12)}...` : value)}
+                  />
+                  <PolarRadiusAxis
+                    stroke="#cbd5e1"
+                    domain={[0, 100]}
+                    tick={{ fontSize: 10, fill: '#94a3b8' }}
+                    tickCount={6}
+                  />
+                  <Radar
+                    dataKey="value"
+                    stroke="#2563eb"
+                    strokeWidth={2}
+                    fill="url(#goalRadar)"
+                    fillOpacity={1}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: 12,
+                      borderColor: '#e2e8f0',
+                      fontSize: 12
+                    }}
+                    formatter={(value) => [`${value}%`, 'Completion']}
+                  />
                 </RadarChart>
               </ResponsiveContainer>
             )}

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import TaskItem from '../components/TaskItem';
 import GraphCard from '../components/GraphCard';
 import CreateTaskModal from '../components/CreateTaskModal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { getApiErrorMessage, taskApi } from '../services/api';
 import usePlannerData from '../hooks/usePlannerData';
 
@@ -13,6 +14,7 @@ const Tasks = () => {
   const [editingTask, setEditingTask] = useState(null);
   const [busyTaskId, setBusyTaskId] = useState('');
   const [actionError, setActionError] = useState('');
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, taskId: null });
 
   const goalOptions = useMemo(
     () =>
@@ -83,11 +85,6 @@ const Tasks = () => {
   };
 
   const handleDeleteTask = async (taskId) => {
-    const confirmed = window.confirm('Delete this task?');
-    if (!confirmed) {
-      return;
-    }
-
     setBusyTaskId(taskId);
     setActionError('');
 
@@ -187,7 +184,7 @@ const Tasks = () => {
                         setEditingTask(task);
                         setTaskModalOpen(true);
                       }}
-                      onDelete={() => handleDeleteTask(task._id)}
+                      onDelete={() => setDeleteDialog({ open: true, taskId: task._id })}
                     />
                   ))
                 )}
@@ -208,6 +205,20 @@ const Tasks = () => {
           setEditingTask(null);
         }}
         onSubmit={handleSaveTask}
+      />
+      <ConfirmDialog
+        open={deleteDialog.open}
+        title="Delete task?"
+        message="This action cannot be undone."
+        confirmLabel="Delete"
+        onCancel={() => setDeleteDialog({ open: false, taskId: null })}
+        onConfirm={() => {
+          const taskId = deleteDialog.taskId;
+          setDeleteDialog({ open: false, taskId: null });
+          if (taskId) {
+            handleDeleteTask(taskId);
+          }
+        }}
       />
     </div>
   );

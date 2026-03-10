@@ -5,7 +5,7 @@ const GoalCard = ({ title, category, progress = 0, tasksCompleted = 0, onClick, 
     <article
       onClick={onClick}
       className={[
-        'surface-card p-4 sm:p-5 transition duration-200',
+        'surface-card p-4 md:p-5 transition duration-200',
         onClick ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-18px_rgba(37,99,235,0.35)]' : ''
       ].join(' ')}
     >
@@ -46,4 +46,3 @@ const GoalCard = ({ title, category, progress = 0, tasksCompleted = 0, onClick, 
 };
 
 export default GoalCard;
-

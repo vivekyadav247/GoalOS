@@ -9,7 +9,7 @@ const Profile = () => {
 
   return (
     <div className="space-y-6">
-      <section className="surface-card p-5 sm:p-6">
+      <section className="surface-card p-5 md:p-6">
         <h2 className="page-title">Profile</h2>
         <p className="page-subtitle">
           Manage your GoalOS identity details. Account deletion is disabled in this app
@@ -17,8 +17,8 @@ const Profile = () => {
         </p>
       </section>
 
-      <section className="surface-card p-5 sm:p-6">
-        <div className="grid gap-4 sm:grid-cols-2">
+      <section className="surface-card p-5 md:p-6">
+        <div className="grid gap-4 md:grid-cols-2">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Name</p>
             <p className="mt-1 text-sm font-medium text-slate-900">

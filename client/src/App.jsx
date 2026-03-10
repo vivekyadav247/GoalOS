@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Show, useAuth, useUser } from '@clerk/react';
 import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
 import MobileNav from './components/MobileNav';
 import Dashboard from './pages/Dashboard';
 import Goals from './pages/Goals';
@@ -30,21 +29,22 @@ const ProtectedRoute = ({ children }) => {
 
 const AppShell = () => {
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[18rem_1fr]">
-      <Sidebar />
-      <div className="min-h-screen">
+    <div className="min-h-screen">
+      <div className="flex min-h-screen flex-col">
         <Navbar />
-        <main className="px-4 pb-24 pt-4 sm:px-6 lg:px-8 lg:pb-8 lg:pt-6">
-          <Routes>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/goals" element={<Goals />} />
-            <Route path="/goals/:goalId" element={<GoalDetail />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
+        <main className="flex-1 overflow-x-hidden pb-24 pt-4 md:pb-8 md:pt-6">
+          <div className="mx-auto w-full max-w-7xl px-4 md:px-6 lg:px-8">
+            <Routes>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/goals" element={<Goals />} />
+              <Route path="/goals/:goalId" element={<GoalDetail />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </div>
         </main>
       </div>
       <Show when="signed-in">
