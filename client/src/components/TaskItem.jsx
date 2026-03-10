@@ -8,6 +8,26 @@ const TaskItem = ({
   onDelete
 }) => {
   const completed = Boolean(task?.completed);
+  const taskDate = task?.date ? new Date(task.date) : null;
+  let isToday = false;
+  let isPast = false;
+  let isFuture = false;
+
+  if (taskDate && !Number.isNaN(taskDate.getTime())) {
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+    if (taskDate < todayStart) {
+      isPast = true;
+    } else if (taskDate >= todayEnd) {
+      isFuture = true;
+    } else {
+      isToday = true;
+    }
+  }
+
+  const isMissed = isPast && !completed;
   const dateLabel = task?.date
     ? new Date(task.date).toLocaleDateString(undefined, {
         month: 'short',
@@ -21,7 +41,7 @@ const TaskItem = ({
         <button
           type="button"
           onClick={onToggle}
-          disabled={busy}
+          disabled={busy || isPast || isFuture}
           className={[
             'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs transition',
             completed
@@ -47,6 +67,11 @@ const TaskItem = ({
               <CalendarDays className="h-3 w-3" aria-hidden="true" />
               {dateLabel}
             </span>
+            {isMissed ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-rose-700">
+                Missed
+              </span>
+            ) : null}
           </div>
         </div>
       </div>

@@ -12,8 +12,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ClerkProvider
       publishableKey={clerkPublishableKey}
       afterSignOutUrl="/"
-      signInFallbackRedirectUrl="/dashboard"
-      signUpFallbackRedirectUrl="/dashboard"
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/"
       localization={{
         userButton: {
           action__manageAccount: 'Profile',

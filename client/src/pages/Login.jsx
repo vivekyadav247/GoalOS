@@ -1,4 +1,4 @@
-﻿import { BrandName } from '../components/Logo';
+import { BrandName } from '../components/Logo';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi, setAuthSession } from '../services/api';
@@ -22,7 +22,7 @@ const Login = () => {
     try {
       const data = await authApi.login(form);
       setAuthSession({ token: data.token, user: data.user });
-      navigate('/dashboard', { replace: true });
+      navigate('/', { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || 'Login failed');
     } finally {

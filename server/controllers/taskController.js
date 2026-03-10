@@ -34,6 +34,14 @@ const createTask = async (req, res) => {
       return res.status(400).json({ message: 'Invalid date value' });
     }
 
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (parsedDate < todayStart) {
+      return res
+        .status(400)
+        .json({ message: 'Tasks cannot be created for past dates' });
+    }
+
     const task = await Task.create({
       clerkId,
       goalId,
@@ -175,9 +183,35 @@ const updateTask = async (req, res) => {
       if (Number.isNaN(nextDate.getTime())) {
         return res.status(400).json({ message: 'Invalid date value' });
       }
+
+      const today = new Date();
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      if (nextDate < todayStart) {
+        return res
+          .status(400)
+          .json({ message: 'Tasks cannot be created for past dates' });
+      }
+
       task.date = nextDate;
     }
     if (req.body.completed !== undefined) {
+      if (req.body.completed && !task.completed) {
+        const today = new Date();
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+        const taskDate = new Date(task.date);
+        if (
+          Number.isNaN(taskDate.getTime())
+          || taskDate < todayStart
+          || taskDate >= todayEnd
+        ) {
+          return res
+            .status(400)
+            .json({ message: 'Tasks can only be completed on their scheduled date' });
+        }
+      }
+
       task.completed = req.body.completed;
     }
 

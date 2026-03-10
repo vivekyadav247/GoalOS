@@ -111,6 +111,9 @@ const applyWeekPattern = async (req, res) => {
         .filter(Boolean)
     );
 
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
     const payloads = [];
 
     DAYS.forEach((day, index) => {
@@ -122,6 +125,10 @@ const applyWeekPattern = async (req, res) => {
       const date = new Date(start);
       date.setDate(start.getDate() + index);
       date.setHours(0, 0, 0, 0);
+
+      if (date < todayStart) {
+        return;
+      }
 
       const key = `${toDateKey(date)}|${title.toLowerCase()}`;
       if (existingKeys.has(key)) {

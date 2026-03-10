@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi, setAuthSession } from '../services/api';
 
@@ -21,7 +21,7 @@ const Register = () => {
     try {
       const data = await authApi.register(form);
       setAuthSession({ token: data.token, user: data.user });
-      navigate('/dashboard', { replace: true });
+      navigate('/', { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || 'Registration failed');
     } finally {

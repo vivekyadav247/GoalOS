@@ -21,11 +21,14 @@ const CreateTaskModal = ({
   onSubmit
 }) => {
   const [form, setForm] = useState(defaultForm);
+  const [dateError, setDateError] = useState('');
 
   useEffect(() => {
     if (!open) {
       return;
     }
+
+    setDateError('');
 
     if (initialValue) {
       const nextForm = {
@@ -55,6 +58,23 @@ const CreateTaskModal = ({
 
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    if (form.date) {
+      const today = new Date();
+      const todayKey = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+      )
+        .toISOString()
+        .slice(0, 10);
+
+      if (form.date < todayKey) {
+        setDateError('Tasks cannot be created for past dates');
+        return;
+      }
+    }
+
     onSubmit({
       title: form.title.trim(),
       date: form.date || null,
@@ -118,8 +138,12 @@ const CreateTaskModal = ({
               name="date"
               value={form.date}
               onChange={handleChange}
+              min={new Date().toISOString().slice(0, 10)}
               required
             />
+            {dateError ? (
+              <p className="mt-1 text-xs text-rose-600">{dateError}</p>
+            ) : null}
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-1">
