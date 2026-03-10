@@ -328,22 +328,22 @@ const Dashboard = () => {
       {modalError ? <div className="surface-card p-4 text-sm text-rose-700">{modalError}</div> : null}
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <article className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Goals</p>
           <p className="mt-3 text-2xl font-semibold text-slate-900">{summary.totalGoals}</p>
           <p className="mt-1 text-xs text-slate-500">Active focus areas</p>
         </article>
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <article className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Tasks Today</p>
           <p className="mt-3 text-2xl font-semibold text-slate-900">{todaysTasks.length}</p>
           <p className="mt-1 text-xs text-slate-500">Scheduled for today</p>
         </article>
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <article className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Completed Tasks</p>
           <p className="mt-3 text-2xl font-semibold text-slate-900">{summary.completedTasks}</p>
           <p className="mt-1 text-xs text-slate-500">Marked as done</p>
         </article>
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <article className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Active Streak</p>
           <p className="mt-3 text-2xl font-semibold text-slate-900">{activeStreak}</p>
           <p className="mt-1 text-xs text-slate-500">{activeStreak === 1 ? 'Day in a row' : 'Days in a row'}</p>

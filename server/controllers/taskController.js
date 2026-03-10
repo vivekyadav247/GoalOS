@@ -175,6 +175,10 @@ const updateTask = async (req, res) => {
       return res.status(404).json({ message: 'Task not found' });
     }
 
+    if (task.completed && (req.body.title !== undefined || req.body.date !== undefined)) {
+      return res.status(400).json({ message: 'Completed tasks cannot be edited' });
+    }
+
     if (req.body.title !== undefined) {
       task.title = req.body.title;
     }
@@ -241,6 +245,10 @@ const deleteTask = async (req, res) => {
 
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
+    }
+
+    if (task.completed) {
+      return res.status(400).json({ message: 'Completed tasks cannot be deleted' });
     }
 
     await Task.deleteOne({ _id: task._id });

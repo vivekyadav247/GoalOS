@@ -13,6 +13,7 @@ import Calendar from './pages/Calendar';
 import LandingPage from './pages/LandingPage';
 import Profile from './pages/Profile';
 import { clearClerkTokenGetter, setClerkTokenGetter } from './services/api';
+import { PlannerDataProvider } from './hooks/usePlannerData';
 
 const ProtectedRoute = ({ children }) => {
   const { isSignedIn, isLoaded } = useUser();
@@ -30,29 +31,31 @@ const ProtectedRoute = ({ children }) => {
 
 const AppShell = () => {
   return (
-    <div className="min-h-screen">
-      <div className="flex min-h-screen flex-col">
-        <Navbar />
-        <main className="flex-1 overflow-x-hidden pb-24 pt-4 md:pb-8 md:pt-6">
-          <div className="mx-auto w-full max-w-7xl px-4 md:px-6 lg:px-8">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/goals" element={<Goals />} />
-              <Route path="/goals/:goalId" element={<GoalDetail />} />
-              <Route path="/tasks" element={<Tasks />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
-        </main>
+    <PlannerDataProvider>
+      <div className="min-h-screen">
+        <div className="flex min-h-screen flex-col">
+          <Navbar />
+          <main className="flex-1 overflow-x-hidden pb-24 pt-4 md:pb-8 md:pt-6">
+            <div className="mx-auto w-full max-w-7xl px-4 md:px-6 lg:px-8">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/goals" element={<Goals />} />
+                <Route path="/goals/:goalId" element={<GoalDetail />} />
+                <Route path="/tasks" element={<Tasks />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+          </main>
+        </div>
+        <Show when="signed-in">
+          <MobileNav />
+        </Show>
       </div>
-      <Show when="signed-in">
-        <MobileNav />
-      </Show>
-    </div>
+    </PlannerDataProvider>
   );
 };
 

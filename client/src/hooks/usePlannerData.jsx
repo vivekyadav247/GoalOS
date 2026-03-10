@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { getApiErrorMessage, plannerApi } from '../services/api';
 
 const emptyState = {
@@ -13,7 +13,9 @@ const emptyState = {
   weekToMonth: {}
 };
 
-const usePlannerData = () => {
+const PlannerDataContext = createContext(null);
+
+const usePlannerDataState = () => {
   const [data, setData] = useState(emptyState);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -47,5 +49,17 @@ const usePlannerData = () => {
   };
 };
 
-export default usePlannerData;
+export const PlannerDataProvider = ({ children }) => {
+  const value = usePlannerDataState();
+  return <PlannerDataContext.Provider value={value}>{children}</PlannerDataContext.Provider>;
+};
 
+const usePlannerData = () => {
+  const context = useContext(PlannerDataContext);
+  if (!context) {
+    throw new Error('usePlannerData must be used within PlannerDataProvider');
+  }
+  return context;
+};
+
+export default usePlannerData;
