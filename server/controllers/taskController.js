@@ -3,6 +3,12 @@ const Task = require('../models/Task');
 const Goal = require('../models/Goal');
 
 const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
+const toDateKey = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toISOString().slice(0, 10);
+};
 
 // POST /api/tasks
 const createTask = async (req, res) => {
@@ -200,16 +206,13 @@ const updateTask = async (req, res) => {
     }
     if (req.body.completed !== undefined) {
       if (req.body.completed && !task.completed) {
-        const today = new Date();
-        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+        const taskDateKey = toDateKey(task.date);
+        const clientDateKey =
+          typeof req.body.clientDate === 'string' ? req.body.clientDate.slice(0, 10) : '';
+        const todayKey = toDateKey(new Date());
+        const expectedKey = clientDateKey || todayKey;
 
-        const taskDate = new Date(task.date);
-        if (
-          Number.isNaN(taskDate.getTime())
-          || taskDate < todayStart
-          || taskDate >= todayEnd
-        ) {
+        if (!taskDateKey || taskDateKey !== expectedKey) {
           return res
             .status(400)
             .json({ message: 'Tasks can only be completed on their scheduled date' });

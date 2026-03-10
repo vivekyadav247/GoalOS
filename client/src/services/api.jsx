@@ -125,7 +125,14 @@ export const taskApi = {
   create: (payload) => unwrap(api.post('/tasks', payload)),
   update: (id, payload) => unwrap(api.put(`/tasks/${id}`, payload)),
   remove: (id) => unwrap(api.delete(`/tasks/${id}`)),
-  toggleComplete: (id, completed) => unwrap(api.put(`/tasks/${id}`, { completed }))
+  toggleComplete: (id, completed) => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const clientDate = `${year}-${month}-${day}`;
+    return unwrap(api.put(`/tasks/${id}`, { completed, clientDate }));
+  }
 };
 
 export const weekApi = {
