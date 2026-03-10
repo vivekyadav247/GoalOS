@@ -93,6 +93,8 @@ const Analytics = () => {
     for (const task of filteredTasks) {
       if (!task.date) continue;
       const d = new Date(task.date);
+      if (Number.isNaN(d.getTime())) continue;
+      if (d > todayStart) continue;
       const key = startOfWeek(d).toISOString().slice(0, 10);
       if (!buckets.has(key)) {
         buckets.set(key, []);
@@ -111,7 +113,7 @@ const Analytics = () => {
           value: progress
         };
       });
-  }, [filteredTasks]);
+  }, [filteredTasks, todayStart]);
 
   const goalMap = useMemo(
     () =>
@@ -274,18 +276,18 @@ const Analytics = () => {
                 </defs>
                 <XAxis
                   dataKey="day"
-                  axisLine={false}
+                  axisLine={{ stroke: '#e2e8f0' }}
                   tickLine={false}
                   tickMargin={8}
-                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                  tick={{ fill: '#64748b', fontSize: 12 }}
                 />
                 <YAxis
                   domain={[0, maxDaily]}
                   allowDecimals={false}
-                  axisLine={false}
+                  axisLine={{ stroke: '#e2e8f0' }}
                   tickLine={false}
                   tickMargin={8}
-                  tick={{ fill: '#94a3b8', fontSize: 11 }}
+                  tick={{ fill: '#64748b', fontSize: 11 }}
                 />
                 <Tooltip
                   cursor={{ fill: 'rgba(15, 23, 42, 0.05)' }}
@@ -296,7 +298,7 @@ const Analytics = () => {
                   }}
                   formatter={(value) => [`${value}`, 'Tasks']}
                 />
-                <Bar dataKey="value" fill="url(#dailyBarGradient)" radius={[10, 10, 6, 6]} barSize={26} />
+                <Bar dataKey="value" fill="url(#dailyBarGradient)" radius={[10, 10, 6, 6]} barSize={34} />
               </BarChart>
             </ResponsiveContainer>
           </GraphCard>
@@ -306,19 +308,19 @@ const Analytics = () => {
               <LineChart data={weeklyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <XAxis
                   dataKey="label"
-                  axisLine={false}
+                  axisLine={{ stroke: '#e2e8f0' }}
                   tickLine={false}
                   tickMargin={8}
-                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                  tick={{ fill: '#64748b', fontSize: 12 }}
                 />
                 <YAxis
                   domain={[0, 100]}
-                  axisLine={false}
+                  axisLine={{ stroke: '#e2e8f0' }}
                   tickLine={false}
                   tickMargin={8}
                   ticks={[0, 25, 50, 75, 100]}
                   tickFormatter={(value) => `${value}%`}
-                  tick={{ fill: '#94a3b8', fontSize: 11 }}
+                  tick={{ fill: '#64748b', fontSize: 11 }}
                 />
                 <Tooltip
                   cursor={{ stroke: '#e2e8f0', strokeDasharray: '4 4' }}
