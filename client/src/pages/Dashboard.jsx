@@ -3,7 +3,6 @@ import { useUser } from '@clerk/react';
 import {
   Bar,
   BarChart,
-  CartesianGrid,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -187,6 +186,7 @@ const Dashboard = () => {
       })),
     [tasks]
   );
+  const maxDaily = useMemo(() => Math.max(1, ...dailyData.map((item) => item.value)), [dailyData]);
 
   const weeklyData = useMemo(() => {
     const buckets = new Map();
@@ -441,28 +441,76 @@ const Dashboard = () => {
       <section className="grid gap-4 xl:grid-cols-2">
         <GraphCard title="Daily productivity" subtitle="Completed tasks by weekday" className="h-[340px]">
           <ResponsiveContainer width="100%" height="88%">
-            <BarChart data={dailyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="label" stroke="#64748b" />
-              <YAxis stroke="#64748b" />
-              <Tooltip />
-              <Bar dataKey="value" fill="#2563eb" radius={[8, 8, 0, 0]} />
+            <BarChart data={dailyData} margin={{ top: 12, right: 16, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="dashboardDailyBar" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3b82f6" />
+                  <stop offset="100%" stopColor="#2563eb" />
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="label"
+                axisLine={false}
+                tickLine={false}
+                tickMargin={8}
+                tick={{ fill: '#94a3b8', fontSize: 12 }}
+              />
+              <YAxis
+                domain={[0, maxDaily]}
+                allowDecimals={false}
+                axisLine={false}
+                tickLine={false}
+                tickMargin={8}
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
+              />
+              <Tooltip
+                cursor={{ fill: 'rgba(15, 23, 42, 0.05)' }}
+                contentStyle={{
+                  borderRadius: 12,
+                  borderColor: '#e2e8f0',
+                  fontSize: 12
+                }}
+                formatter={(value) => [`${value}`, 'Tasks']}
+              />
+              <Bar dataKey="value" fill="url(#dashboardDailyBar)" radius={[10, 10, 6, 6]} barSize={26} />
             </BarChart>
           </ResponsiveContainer>
         </GraphCard>
         <GraphCard title="Weekly progress" subtitle="Completion percentage by week" className="h-[340px]">
           <ResponsiveContainer width="100%" height="88%">
-            <LineChart data={weeklyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="label" stroke="#64748b" />
-              <YAxis stroke="#64748b" domain={[0, 100]} />
-              <Tooltip />
+            <LineChart data={weeklyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+              <XAxis
+                dataKey="label"
+                axisLine={false}
+                tickLine={false}
+                tickMargin={8}
+                tick={{ fill: '#94a3b8', fontSize: 12 }}
+              />
+              <YAxis
+                domain={[0, 100]}
+                axisLine={false}
+                tickLine={false}
+                tickMargin={8}
+                ticks={[0, 25, 50, 75, 100]}
+                tickFormatter={(value) => `${value}%`}
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
+              />
+              <Tooltip
+                cursor={{ stroke: '#e2e8f0', strokeDasharray: '4 4' }}
+                contentStyle={{
+                  borderRadius: 12,
+                  borderColor: '#e2e8f0',
+                  fontSize: 12
+                }}
+                formatter={(value) => [`${value}%`, 'Completion']}
+              />
               <Line
                 type="monotone"
                 dataKey="value"
-                stroke="#10b981"
-                strokeWidth={2.5}
-                dot={{ r: 4, fill: '#10b981' }}
+                stroke="#0ea5e9"
+                strokeWidth={3}
+                dot={{ r: 4, fill: '#fff', stroke: '#0ea5e9', strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: '#0ea5e9' }}
               />
             </LineChart>
           </ResponsiveContainer>
