@@ -121,6 +121,19 @@ const GoalDetail = () => {
         return '';
       }
 
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (week.endDate) {
+        const end = new Date(week.endDate);
+        if (!Number.isNaN(end.getTime())) {
+          end.setHours(23, 59, 59, 999);
+          if (today.getTime() >= start.getTime() && today.getTime() <= end.getTime()) {
+            return today.toISOString().slice(0, 10);
+          }
+        }
+      }
+
       start.setDate(start.getDate() + 1);
       start.setHours(0, 0, 0, 0);
       return start.toISOString().slice(0, 10);
