@@ -355,13 +355,30 @@ const GoalDetail = () => {
       return;
     }
 
+    const formatLocalDate = (value) => {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return '';
+      }
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const weekStart = formatLocalDate(week.startDate);
+    if (!weekStart) {
+      setActionError('Week start date is invalid');
+      return;
+    }
+
     setBusyAction(`pattern-${week._id}`);
     setActionError('');
 
     try {
       await weekApi.applyPattern({
         goalId,
-        weekStart: week.startDate,
+        weekStart,
         pattern: payload.pattern,
         task: payload.task,
         weekdayTask: payload.weekdayTask,

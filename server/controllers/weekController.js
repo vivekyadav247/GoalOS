@@ -31,6 +31,20 @@ const updateWeekProgressFromTasks = async (weekId) => {
 };
 
 const normalizeWeekStart = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split('-').map(Number);
+    const localDate = new Date(year, month - 1, day);
+    if (Number.isNaN(localDate.getTime())) {
+      return null;
+    }
+    localDate.setHours(0, 0, 0, 0);
+    return localDate;
+  }
+
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
     return null;
