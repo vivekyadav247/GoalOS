@@ -156,15 +156,24 @@ const Dashboard = () => {
       return 0;
     }
 
+    const today = normalizeDate(new Date());
+    if (!today) return 0;
+    const todayKey = toDateKey(today);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = toDateKey(yesterday);
+
+    if (!completedDays.has(todayKey) && !completedDays.has(yesterdayKey)) {
+      return 0;
+    }
+
+    const anchor = completedDays.has(todayKey) ? today : yesterday;
     let streak = 0;
-    const cursor = new Date();
-    cursor.setHours(0, 0, 0, 0);
+    const cursor = new Date(anchor);
 
     while (true) {
       const key = toDateKey(cursor);
-      if (!completedDays.has(key)) {
-        break;
-      }
+      if (!completedDays.has(key)) break;
       streak += 1;
       cursor.setDate(cursor.getDate() - 1);
     }

@@ -58,13 +58,22 @@ const Navbar = () => {
         .filter(Boolean)
     );
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = normalizeDate(new Date());
+    if (!today) return { current: 0, hasToday: false };
+
     const todayKey = toDateKey(today);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = toDateKey(yesterday);
     const hasToday = completedDays.has(todayKey);
 
+    if (!hasToday && !completedDays.has(yesterdayKey)) {
+      return { current: 0, hasToday: false };
+    }
+
+    const anchor = hasToday ? today : yesterday;
     let current = 0;
-    const cursor = new Date(today);
+    const cursor = new Date(anchor);
 
     while (true) {
       const key = toDateKey(cursor);
@@ -109,7 +118,7 @@ const Navbar = () => {
             title="Current streak"
           >
             <Flame
-              className={['h-5 w-5', hasStreak ? 'text-orange-500' : 'text-slate-300'].join(' ')}
+              className={['h-5 w-5', streak.hasToday ? 'text-orange-500' : 'text-slate-300'].join(' ')}
               aria-hidden="true"
             />
             <span

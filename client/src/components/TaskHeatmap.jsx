@@ -120,7 +120,6 @@ const TaskHeatmap = ({ tasks = [] }) => {
   }, [safeTasks, selectedYear]);
 
   const todayKey = toDateKey(new Date());
-  const todayCount = allCountsByDate.get(todayKey) || 0;
 
   const months = useMemo(() => {
     const items = [];
@@ -211,21 +210,30 @@ const TaskHeatmap = ({ tasks = [] }) => {
   const currentStreak = useMemo(() => {
     const todayDate = normalizeDate(new Date());
     if (!todayDate) return 0;
-    if (todayCount === 0) return 0;
 
+    const completedDays = new Set(allCountsByDate.keys());
+    const todayKey = toDateKey(todayDate);
+    const yesterday = new Date(todayDate);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = toDateKey(yesterday);
+
+    if (!completedDays.has(todayKey) && !completedDays.has(yesterdayKey)) {
+      return 0;
+    }
+
+    const anchor = completedDays.has(todayKey) ? todayDate : yesterday;
     let streak = 0;
-    const cursor = new Date(todayDate);
+    const cursor = new Date(anchor);
 
     while (true) {
       const key = toDateKey(cursor);
-      if (!key) break;
-      if ((allCountsByDate.get(key) || 0) === 0) break;
+      if (!completedDays.has(key)) break;
       streak += 1;
       cursor.setDate(cursor.getDate() - 1);
     }
 
     return streak;
-  }, [allCountsByDate, todayCount]);
+  }, [allCountsByDate]);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 md:p-5">
