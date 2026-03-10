@@ -128,6 +128,10 @@ export const taskApi = {
   toggleComplete: (id, completed) => unwrap(api.put(`/tasks/${id}`, { completed }))
 };
 
+export const weekApi = {
+  applyPattern: (payload) => unwrap(api.post('/weeks/pattern', payload))
+};
+
 const startOfWeek = (date) => {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const day = d.getDay() || 7;

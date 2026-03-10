@@ -1,7 +1,11 @@
-const COLUMNS = 28;
+﻿const COLUMNS = 28;
 const ROWS = 7;
-const CELL_SIZE = 10;
-const CELL_GAP = 3;
+const GAP_COLUMNS = 1;
+const MONTH_GROUPS = [4, 4, 5, 5, 5, 5];
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+
+const EXPANDED_COLUMNS = MONTH_GROUPS.reduce((sum, size) => sum + size, 0)
+  + GAP_COLUMNS * (MONTH_GROUPS.length - 1);
 
 const levelClass = (value) => {
   if (value >= 4) return 'bg-blue-800';
@@ -23,69 +27,98 @@ const previewCells = Array.from({ length: COLUMNS * ROWS }, (_, index) => {
   return 4;
 });
 
-const monthMarks = [
-  { label: 'Jan', col: 0 },
-  { label: 'Feb', col: 5 },
-  { label: 'Mar', col: 10 },
-  { label: 'Apr', col: 15 },
-  { label: 'May', col: 20 },
-  { label: 'Jun', col: 24 }
-];
+const monthMarks = MONTH_GROUPS.map((size, index) => {
+  const start = MONTH_GROUPS.slice(0, index).reduce((sum, value) => sum + value, 0)
+    + GAP_COLUMNS * index;
+  return { label: MONTH_LABELS[index], start, span: size };
+});
 
-const gridWidth = COLUMNS * CELL_SIZE + (COLUMNS - 1) * CELL_GAP;
-const columnWidth = CELL_SIZE + CELL_GAP;
+const columnMap = [];
+let dataColumn = 0;
+
+MONTH_GROUPS.forEach((size, index) => {
+  for (let i = 0; i < size; i += 1) {
+    columnMap.push(dataColumn);
+    dataColumn += 1;
+  }
+
+  if (index < MONTH_GROUPS.length - 1) {
+    columnMap.push(null);
+  }
+});
+
+const expandedCells = columnMap.flatMap((dataCol) =>
+  Array.from({ length: ROWS }, (_, row) => {
+    if (dataCol === null) {
+      return null;
+    }
+    return previewCells[dataCol * ROWS + row];
+  })
+);
 
 const PlannerPreview = () => {
   return (
-    <section className="grid gap-6 text-center lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start lg:text-left">
+    <section className="grid gap-6 text-center lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-center lg:gap-10 lg:text-left">
       <div className="mx-auto max-w-xl lg:mx-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Heatmap Preview</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Task Heatmap</p>
         <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 md:text-3xl">
-          See consistency at a glance.
+          Visualize Your Consistency
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-          GoalOS dashboard includes a productivity heatmap so you can quickly understand daily
-          execution, streak quality, and contribution patterns over time.
+          GoalOS includes a contribution-style productivity heatmap similar to GitHub or LeetCode.
+          Each completed task fills a cell in a calendar grid. Over time you see consistency
+          patterns and streaks.
         </p>
       </div>
 
-      <div className="surface-card border-slate-200 bg-white/90 p-4 md:p-5">
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-500">
-          <p className="font-semibold text-slate-900">186 tasks in preview period</p>
-          <p>Max streak: 14</p>
+      <div className="surface-card border-slate-200 bg-white/90 p-3 sm:p-4 md:p-5">
+        <div className="space-y-1 text-xs text-slate-600 sm:text-sm">
+          <p>🔥 Current streak: 5 days</p>
+          <p>🔥 Best streak: 12 days</p>
+          <p>🔥 Tasks this week: 7</p>
         </div>
 
-        <div className="mt-4 overflow-x-auto">
-          <div className="min-w-max">
+        <div className="mt-4 overflow-hidden sm:overflow-x-auto">
+          <div className="mx-auto flex w-full justify-center">
+            <div className="w-max">
             <div
               style={{
+                '--cell-size': 'clamp(6px, 1.8vw, 10px)',
+                '--cell-gap': 'clamp(2px, 0.5vw, 3px)',
                 display: 'grid',
-                gridTemplateColumns: `repeat(${COLUMNS}, ${CELL_SIZE}px)`,
-                gridTemplateRows: `repeat(${ROWS}, ${CELL_SIZE}px)`,
+                gridTemplateColumns: `repeat(${EXPANDED_COLUMNS}, var(--cell-size))`,
+                gridTemplateRows: `repeat(${ROWS}, var(--cell-size))`,
                 gridAutoFlow: 'column',
-                gap: `${CELL_GAP}px`,
-                width: `${gridWidth}px`,
-                minWidth: `${gridWidth}px`
+                gap: 'var(--cell-gap)'
               }}
             >
-              {previewCells.map((value, index) => (
+              {expandedCells.map((value, index) => (
                 <div
                   key={index}
-                  className={`h-[10px] w-[10px] rounded-[2px] ${levelClass(value)}`}
+                  className={value === null ? 'rounded-[2px] bg-transparent' : `rounded-[2px] ${levelClass(value)}`}
+                  style={{ width: 'var(--cell-size)', height: 'var(--cell-size)' }}
+                  aria-hidden={value === null}
                 />
               ))}
             </div>
 
-            <div className="relative mt-2 h-5 text-[11px] text-slate-400" style={{ width: `${gridWidth}px` }}>
+            <div
+              className="mt-2 grid text-[10px] text-slate-400 sm:text-[11px]"
+              style={{
+                gridTemplateColumns: `repeat(${EXPANDED_COLUMNS}, var(--cell-size))`,
+                columnGap: 'var(--cell-gap)'
+              }}
+            >
               {monthMarks.map((month) => (
                 <span
                   key={month.label}
-                  className="absolute top-0"
-                  style={{ left: `${month.col * columnWidth}px` }}
+                  className="text-center"
+                  style={{ gridColumn: `${month.start + 1} / span ${month.span}` }}
                 >
                   {month.label}
                 </span>
               ))}
+            </div>
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import CreateTaskModal from '../components/CreateTaskModal';
 import GoalPlanner from '../components/GoalPlanner';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { getApiErrorMessage, goalApi, taskApi } from '../services/api';
+import { getApiErrorMessage, goalApi, taskApi, weekApi } from '../services/api';
 import useGoalHierarchy from '../hooks/useGoalHierarchy';
 
 const GoalDetail = () => {
@@ -324,27 +324,31 @@ const GoalDetail = () => {
     }
   };
 
-  const handleBulkCreateTasks = async (weekId, payloads) => {
-    if (!Array.isArray(payloads) || payloads.length === 0) {
+  const handleApplyWeeklyPattern = async (week, payload) => {
+    if (!goalId) {
+      setActionError('Goal is missing');
       return;
     }
 
-    setBusyAction(`bulk-week-${weekId}`);
+    if (!week?.startDate) {
+      setActionError('Week start date is missing');
+      return;
+    }
+
+    setBusyAction(`pattern-${week._id}`);
     setActionError('');
 
     try {
-      // Sequential to keep server load predictable and ordering stable.
-      // eslint-disable-next-line no-restricted-syntax
-      for (const payload of payloads) {
-        // eslint-disable-next-line no-await-in-loop
-        await taskApi.create({
-          weekId,
-          title: payload.title,
-          day: payload.day,
-          category: payload.category,
-          priority: payload.priority
-        });
-      }
+      await weekApi.applyPattern({
+        goalId,
+        weekStart: week.startDate,
+        pattern: payload.pattern,
+        task: payload.task,
+        weekdayTask: payload.weekdayTask,
+        weekendTask: payload.weekendTask,
+        sundayTask: payload.sundayTask,
+        customDays: payload.customDays
+      });
       await refresh();
     } catch (err) {
       setActionError(getApiErrorMessage(err, 'Unable to apply weekly pattern'));
@@ -373,6 +377,11 @@ const GoalDetail = () => {
         ? { title: '', date: selectedDateForTask }
         : null),
     [editingTask, selectedDateForTask]
+  );
+
+  const patternBusyId = useMemo(
+    () => (busyAction.startsWith('pattern-') ? busyAction.slice('pattern-'.length) : ''),
+    [busyAction]
   );
 
   if (loading) {
@@ -486,6 +495,8 @@ const GoalDetail = () => {
             setTaskModalOpen(true);
           }}
           onDeleteTask={(taskId) => setDeleteTaskDialog({ open: true, taskId })}
+          onApplyPattern={handleApplyWeeklyPattern}
+          patternBusyId={patternBusyId}
           todayWeekId={todayWeekId}
           onWeekRef={registerWeekRef}
         />

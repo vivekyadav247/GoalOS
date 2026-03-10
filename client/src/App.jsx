@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { Show, useAuth, useUser } from '@clerk/react';
 import Navbar from './components/Navbar';
 import MobileNav from './components/MobileNav';
+import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Goals from './pages/Goals';
 import GoalDetail from './pages/GoalDetail';
@@ -35,6 +36,7 @@ const AppShell = () => {
         <main className="flex-1 overflow-x-hidden pb-24 pt-4 md:pb-8 md:pt-6">
           <div className="mx-auto w-full max-w-7xl px-4 md:px-6 lg:px-8">
             <Routes>
+              <Route path="/" element={<Home />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/goals" element={<Goals />} />
               <Route path="/goals/:goalId" element={<GoalDetail />} />
@@ -75,7 +77,13 @@ const App = () => {
       <Route
         path="/"
         element={
-          isSignedIn ? <Navigate to="/dashboard" replace /> : <LandingPage />
+          isSignedIn ? (
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          ) : (
+            <LandingPage />
+          )
         }
       />
       <Route

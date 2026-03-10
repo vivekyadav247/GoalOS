@@ -7,6 +7,15 @@ const Footer = () => {
         <div className="mx-auto md:mx-0">
           <p className="text-base font-semibold text-slate-900">GoalOS</p>
           <p className="mt-2 text-sm text-slate-600">Goal planning system for daily execution.</p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500 md:justify-start">
+            <a href="#" className="hover:text-blue-700">
+              Contact
+            </a>
+            <a href="#" className="hover:text-blue-700">
+              Privacy
+            </a>
+            <span>© {new Date().getFullYear()} GoalOS</span>
+          </div>
         </div>
 
         <div className="mx-auto md:mx-0">

@@ -1,30 +1,35 @@
-import { Target, CalendarDays, CheckSquare, ActivitySquare, LineChart } from 'lucide-react';
+import { Target, CalendarDays, CheckSquare, ActivitySquare, LineChart, CalendarRange } from 'lucide-react';
 
 const FEATURES = [
   {
     icon: Target,
     title: 'Goal Planning',
-    description: 'Create structured long-term goals with clear timelines.'
+    description: 'Define long-term outcomes and keep every task aligned.'
+  },
+  {
+    icon: CalendarRange,
+    title: 'Automated Monthly Planning',
+    description: 'Break large goals into achievable monthly milestones.'
   },
   {
     icon: CalendarDays,
-    title: 'Weekly Structure',
-    description: 'Organize each goal into practical and trackable weekly focus.'
+    title: 'Weekly Task Breakdown',
+    description: 'Translate plans into weekly focus so nothing is missed.'
   },
   {
     icon: CheckSquare,
-    title: 'Task Tracking',
-    description: 'Track daily tasks with quick updates and completion visibility.'
-  },
-  {
-    icon: ActivitySquare,
-    title: 'Productivity Heatmap',
-    description: 'Visualize your daily contribution pattern across the year.'
+    title: 'Daily Task Tracking',
+    description: 'See today’s priorities and keep execution consistent.'
   },
   {
     icon: LineChart,
-    title: 'Progress Analytics',
-    description: 'Measure consistency, streaks, and execution momentum.'
+    title: 'Progress Monitoring',
+    description: 'Track completion trends across goals, weeks, and months.'
+  },
+  {
+    icon: ActivitySquare,
+    title: 'Consistency Tracking',
+    description: 'Use the heatmap to monitor streaks and daily rhythm.'
   }
 ];
 
@@ -36,13 +41,13 @@ const FeaturesSection = () => {
         Everything you need to run the GoalOS planning system.
       </h2>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map((feature) => {
           const Icon = feature.icon;
           return (
             <article
               key={feature.title}
-              className="surface-card h-full border-slate-100/80 bg-white/90 p-4 text-left shadow-[0_14px_40px_-24px_rgba(15,23,42,0.3)]"
+              className="surface-card h-full border-slate-100/80 bg-white/90 p-4 text-left shadow-[0_14px_40px_-24px_rgba(15,23,42,0.3)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_50px_-26px_rgba(15,23,42,0.35)]"
             >
               <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                 <Icon className="h-5 w-5" aria-hidden="true" />
