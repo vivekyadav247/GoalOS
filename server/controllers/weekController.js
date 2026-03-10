@@ -36,9 +36,11 @@ const normalizeWeekStart = (value) => {
     return null;
   }
 
+  // Trust the provided weekStart from the client and only
+  // normalize the time portion, so we don't accidentally
+  // shift into the previous calendar week due to timezone
+  // differences or double "start of week" adjustments.
   parsed.setHours(0, 0, 0, 0);
-  const day = parsed.getDay() || 7;
-  parsed.setDate(parsed.getDate() - (day - 1));
 
   return parsed;
 };
