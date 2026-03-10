@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import CreateTaskModal from '../components/CreateTaskModal';
+import GoalTaskQuickAdd from '../components/GoalTaskQuickAdd';
 import GoalPlanner from '../components/GoalPlanner';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { getApiErrorMessage, goalApi, taskApi, weekApi } from '../services/api';
@@ -29,6 +30,7 @@ const GoalDetail = () => {
   const [busyTaskId, setBusyTaskId] = useState('');
   const [busyAction, setBusyAction] = useState('');
   const [actionError, setActionError] = useState('');
+  const [quickAddBusy, setQuickAddBusy] = useState(false);
   const [selectedDateForTask, setSelectedDateForTask] = useState('');
   const [deleteTaskDialog, setDeleteTaskDialog] = useState({ open: false, taskId: null });
   const [deleteGoalDialogOpen, setDeleteGoalDialogOpen] = useState(false);
@@ -40,6 +42,17 @@ const GoalDetail = () => {
     () => Object.values(weeksByMonth || {}).flat(),
     [weeksByMonth]
   );
+
+  const getWeekRange = useCallback((week) => {
+    if (!week) {
+      return { start: null, end: null };
+    }
+
+    return {
+      start: week.rangeStart || week.startDate || null,
+      end: week.rangeEnd || week.endDate || null
+    };
+  }, []);
 
   const getWeekById = useCallback(
     (weekId) => getAllWeeks().find((week) => week._id === weekId) || null,
@@ -62,23 +75,27 @@ const GoalDetail = () => {
 
       const allWeeks = getAllWeeks();
       const match = allWeeks.find((week) => {
-        if (!week.startDate || !week.endDate) {
+        const range = getWeekRange(week);
+        if (!range.start || !range.end) {
           return false;
         }
 
-        const start = new Date(week.startDate);
-        const end = new Date(week.endDate);
+        const start = new Date(range.start);
+        const end = new Date(range.end);
 
         if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
           return false;
         }
+
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
 
         return ts >= start.getTime() && ts <= end.getTime();
       });
 
       return match?._id || '';
     },
-    [getAllWeeks]
+    [getAllWeeks, getWeekRange]
   );
 
   const todayWeekId = useMemo(
@@ -109,30 +126,35 @@ const GoalDetail = () => {
     }
   }, []);
 
+  const formatLocalDate = useCallback((value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
+
   const deriveDefaultDateForWeek = useCallback(
     (weekId) => {
       const week = getWeekById(weekId);
-      if (!week || !week.startDate) {
+      const range = getWeekRange(week);
+      if (!range.start) {
         return '';
       }
 
-      const start = new Date(week.startDate);
+      const start = new Date(range.start);
       if (Number.isNaN(start.getTime())) {
         return '';
       }
 
-      const formatLocalDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      };
-
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      if (week.endDate) {
-        const end = new Date(week.endDate);
+      if (range.end) {
+        const end = new Date(range.end);
         if (!Number.isNaN(end.getTime())) {
           end.setHours(23, 59, 59, 999);
           if (today.getTime() >= start.getTime() && today.getTime() <= end.getTime()) {
@@ -145,7 +167,7 @@ const GoalDetail = () => {
       // to ensure the task is always created inside the selected week.
       return formatLocalDate(start);
     },
-    [getWeekById]
+    [getWeekById, getWeekRange, formatLocalDate]
   );
 
   useEffect(() => {
@@ -344,38 +366,21 @@ const GoalDetail = () => {
     }
   };
 
-  const handleApplyWeeklyPattern = async (week, payload) => {
-    if (!goalId) {
-      setActionError('Goal is missing');
-      return;
-    }
-
-    if (!week?.startDate) {
-      setActionError('Week start date is missing');
-      return;
-    }
-
-    const formatLocalDate = (value) => {
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) {
-        return '';
+  const applyPatternToWeek = useCallback(
+    async (week, payload) => {
+      if (!goalId) {
+        throw new Error('Goal is missing');
       }
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
 
-    const weekStart = formatLocalDate(week.startDate);
-    if (!weekStart) {
-      setActionError('Week start date is invalid');
-      return;
-    }
+      if (!week?.startDate) {
+        throw new Error('Week start date is missing');
+      }
 
-    setBusyAction(`pattern-${week._id}`);
-    setActionError('');
+      const weekStart = formatLocalDate(week.startDate);
+      if (!weekStart) {
+        throw new Error('Week start date is invalid');
+      }
 
-    try {
       await weekApi.applyPattern({
         goalId,
         weekStart,
@@ -384,13 +389,138 @@ const GoalDetail = () => {
         weekdayTask: payload.weekdayTask,
         weekendTask: payload.weekendTask,
         sundayTask: payload.sundayTask,
-        customDays: payload.customDays
+        customDays: payload.customDays,
+        rangeStart: payload.rangeStart,
+        rangeEnd: payload.rangeEnd
       });
+    },
+    [goalId, formatLocalDate]
+  );
+
+  const handleApplyWeeklyPattern = async (week, payload) => {
+    setBusyAction(`pattern-${week?._id || ''}`);
+    setActionError('');
+
+    try {
+      await applyPatternToWeek(week, payload);
       await refresh();
     } catch (err) {
       setActionError(getApiErrorMessage(err, 'Unable to apply weekly pattern'));
     } finally {
       setBusyAction('');
+    }
+  };
+
+  const handleQuickAddTask = async (payload) => {
+    if (!goalId) {
+      setActionError('Goal is missing');
+      return false;
+    }
+
+    if (!payload?.title || !payload?.date) {
+      setActionError('Task title and date are required');
+      return false;
+    }
+
+    setQuickAddBusy(true);
+    setActionError('');
+
+    try {
+      await taskApi.create({
+        goalId,
+        title: payload.title,
+        date: payload.date
+      });
+      await refresh();
+      return true;
+    } catch (err) {
+      setActionError(getApiErrorMessage(err, 'Unable to create task'));
+      return false;
+    } finally {
+      setQuickAddBusy(false);
+    }
+  };
+
+  const handleQuickApplyPattern = async ({ mode, monthId, weekId, payload }) => {
+    if (!goalId) {
+      setActionError('Goal is missing');
+      return false;
+    }
+
+    setQuickAddBusy(true);
+    setActionError('');
+
+    try {
+      if (mode === 'WEEK') {
+        const week = getWeekById(weekId);
+        if (!week) {
+          throw new Error('Selected week not found');
+        }
+        await applyPatternToWeek(week, payload);
+      } else if (mode === 'MONTH') {
+        const monthWeeks = weeksByMonth[monthId] || [];
+        if (monthWeeks.length === 0) {
+          throw new Error('No weeks found for this month');
+        }
+        const [yearValue, monthValue] = String(monthId || '').split('-').map(Number);
+        if (!yearValue || !monthValue) {
+          throw new Error('Invalid month selection');
+        }
+        const monthStart = new Date(yearValue, monthValue - 1, 1);
+        const monthEnd = new Date(yearValue, monthValue, 0, 23, 59, 59, 999);
+
+        let goalStart = goal?.startDate ? new Date(goal.startDate) : null;
+        let goalEnd = goal?.endDate ? new Date(goal.endDate) : null;
+
+        if (goalStart && Number.isNaN(goalStart.getTime())) {
+          goalStart = null;
+        }
+        if (goalEnd && Number.isNaN(goalEnd.getTime())) {
+          goalEnd = null;
+        }
+
+        if (goalStart) {
+          goalStart.setHours(0, 0, 0, 0);
+        }
+        if (goalEnd) {
+          goalEnd.setHours(23, 59, 59, 999);
+        }
+
+        let rangeStart = monthStart;
+        let rangeEnd = monthEnd;
+
+        if (goalStart && goalStart > rangeStart) {
+          rangeStart = goalStart;
+        }
+        if (goalEnd && goalEnd < rangeEnd) {
+          rangeEnd = goalEnd;
+        }
+
+        if (rangeStart > rangeEnd) {
+          throw new Error('Selected month is outside the goal timeline');
+        }
+
+        const rangeStartKey = formatLocalDate(rangeStart);
+        const rangeEndKey = formatLocalDate(rangeEnd);
+
+        for (const week of monthWeeks) {
+          await applyPatternToWeek(week, {
+            ...payload,
+            rangeStart: rangeStartKey,
+            rangeEnd: rangeEndKey
+          });
+        }
+      } else {
+        throw new Error('Select a planning option');
+      }
+
+      await refresh();
+      return true;
+    } catch (err) {
+      setActionError(getApiErrorMessage(err, 'Unable to apply weekly pattern'));
+      return false;
+    } finally {
+      setQuickAddBusy(false);
     }
   };
 
@@ -467,6 +597,15 @@ const GoalDetail = () => {
       </section>
 
       {actionError ? <div className="surface-card p-4 text-sm text-rose-700">{actionError}</div> : null}
+
+      <GoalTaskQuickAdd
+        goal={goal}
+        months={months}
+        weeksByMonth={weeksByMonth}
+        onCreateTask={handleQuickAddTask}
+        onApplyPattern={handleQuickApplyPattern}
+        busy={quickAddBusy}
+      />
 
       <section className="surface-card p-4 md:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">

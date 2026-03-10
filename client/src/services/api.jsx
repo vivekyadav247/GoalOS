@@ -186,8 +186,23 @@ export const getCalendarWeeks = (rangeStart, rangeEnd) => {
     return weeks;
   }
 
-  const firstWeekStart = startOfWeek(rangeStart);
-  const lastWeekEnd = endOfWeek(rangeEnd);
+  const normalizedStart = new Date(
+    rangeStart.getFullYear(),
+    rangeStart.getMonth(),
+    rangeStart.getDate()
+  );
+  const normalizedEnd = new Date(
+    rangeEnd.getFullYear(),
+    rangeEnd.getMonth(),
+    rangeEnd.getDate(),
+    23,
+    59,
+    59,
+    999
+  );
+
+  const firstWeekStart = startOfWeek(normalizedStart);
+  const lastWeekEnd = endOfWeek(normalizedEnd);
 
   for (
     let cursor = new Date(firstWeekStart);
@@ -197,10 +212,14 @@ export const getCalendarWeeks = (rangeStart, rangeEnd) => {
     const start = new Date(cursor);
     const end = endOfWeek(start);
     const key = weekKey(start);
+    const rangeStartDate = start < normalizedStart ? new Date(normalizedStart) : new Date(start);
+    const rangeEndDate = end > normalizedEnd ? new Date(normalizedEnd) : new Date(end);
     weeks.push({
       _id: key,
       startDate: start.toISOString(),
-      endDate: end.toISOString()
+      endDate: end.toISOString(),
+      rangeStart: rangeStartDate.toISOString(),
+      rangeEnd: rangeEndDate.toISOString()
     });
   }
 
@@ -280,7 +299,8 @@ export const plannerApi = {
 
     const weeksByMonth = {};
     for (const week of weeks) {
-      const start = new Date(week.startDate);
+      const startValue = week.rangeStart || week.startDate;
+      const start = new Date(startValue);
       const key = monthKey(start);
       if (!weeksByMonth[key]) {
         weeksByMonth[key] = [];
@@ -317,7 +337,9 @@ export const plannerApi = {
         return {
           _id: key,
           startDate: start.toISOString(),
-          endDate: end.toISOString()
+          endDate: end.toISOString(),
+          rangeStart: start.toISOString(),
+          rangeEnd: end.toISOString()
         };
       });
 

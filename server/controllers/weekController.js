@@ -67,6 +67,33 @@ const toDateKey = (value) => {
   return date.toISOString().slice(0, 10);
 };
 
+const normalizeRangeBoundary = (value, isEnd = false) => {
+  if (!value) {
+    return null;
+  }
+
+  let parsed = null;
+
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split('-').map(Number);
+    parsed = new Date(year, month - 1, day);
+  } else {
+    parsed = new Date(value);
+  }
+
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  if (isEnd) {
+    parsed.setHours(23, 59, 59, 999);
+  } else {
+    parsed.setHours(0, 0, 0, 0);
+  }
+
+  return parsed;
+};
+
 // POST /api/weeks/pattern
 const applyWeekPattern = async (req, res) => {
   try {
@@ -79,7 +106,9 @@ const applyWeekPattern = async (req, res) => {
       weekdayTask,
       weekendTask,
       sundayTask,
-      customDays
+      customDays,
+      rangeStart,
+      rangeEnd
     } = req.body;
 
     if (!clerkId) {
@@ -97,6 +126,47 @@ const applyWeekPattern = async (req, res) => {
     const goal = await Goal.findOne({ _id: goalId, clerkId });
     if (!goal) {
       return res.status(404).json({ message: 'Goal not found' });
+    }
+
+    let goalStart = goal.startDate ? new Date(goal.startDate) : null;
+    let goalEnd = goal.endDate ? new Date(goal.endDate) : null;
+
+    if (goalStart && Number.isNaN(goalStart.getTime())) {
+      goalStart = null;
+    }
+
+    if (goalEnd && Number.isNaN(goalEnd.getTime())) {
+      goalEnd = null;
+    }
+
+    if (goalStart) {
+      goalStart.setHours(0, 0, 0, 0);
+    }
+
+    if (goalEnd) {
+      goalEnd.setHours(23, 59, 59, 999);
+    }
+
+    let effectiveStart = goalStart;
+    let effectiveEnd = goalEnd;
+
+    const rangeStartDate = normalizeRangeBoundary(rangeStart, false);
+    const rangeEndDate = normalizeRangeBoundary(rangeEnd, true);
+
+    if (rangeStartDate) {
+      effectiveStart = effectiveStart
+        ? new Date(Math.max(effectiveStart.getTime(), rangeStartDate.getTime()))
+        : rangeStartDate;
+    }
+
+    if (rangeEndDate) {
+      effectiveEnd = effectiveEnd
+        ? new Date(Math.min(effectiveEnd.getTime(), rangeEndDate.getTime()))
+        : rangeEndDate;
+    }
+
+    if (effectiveStart && effectiveEnd && effectiveStart > effectiveEnd) {
+      return res.status(400).json({ message: 'Selected range is outside the goal timeline' });
     }
 
     const start = normalizeWeekStart(weekStart);
@@ -143,6 +213,14 @@ const applyWeekPattern = async (req, res) => {
       date.setHours(0, 0, 0, 0);
 
       if (date < todayStart) {
+        return;
+      }
+
+      if (effectiveStart && date < effectiveStart) {
+        return;
+      }
+
+      if (effectiveEnd && date > effectiveEnd) {
         return;
       }
 

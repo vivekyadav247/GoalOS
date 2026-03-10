@@ -51,6 +51,27 @@ const createTask = async (req, res) => {
       return res.status(400).json({ message: 'Invalid date value' });
     }
 
+    const goalStart = goal.startDate ? new Date(goal.startDate) : null;
+    const goalEnd = goal.endDate ? new Date(goal.endDate) : null;
+
+    if (goalStart && !Number.isNaN(goalStart.getTime())) {
+      goalStart.setHours(0, 0, 0, 0);
+      if (parsedDate < goalStart) {
+        return res
+          .status(400)
+          .json({ message: 'Task date must be within the goal timeline' });
+      }
+    }
+
+    if (goalEnd && !Number.isNaN(goalEnd.getTime())) {
+      goalEnd.setHours(23, 59, 59, 999);
+      if (parsedDate > goalEnd) {
+        return res
+          .status(400)
+          .json({ message: 'Task date must be within the goal timeline' });
+      }
+    }
+
     const today = new Date();
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     if (parsedDate < todayStart) {
@@ -203,6 +224,32 @@ const updateTask = async (req, res) => {
       const nextDate = new Date(req.body.date);
       if (Number.isNaN(nextDate.getTime())) {
         return res.status(400).json({ message: 'Invalid date value' });
+      }
+
+      const goal = await Goal.findOne({ _id: task.goalId, clerkId });
+      if (!goal) {
+        return res.status(404).json({ message: 'Goal not found' });
+      }
+
+      const goalStart = goal.startDate ? new Date(goal.startDate) : null;
+      const goalEnd = goal.endDate ? new Date(goal.endDate) : null;
+
+      if (goalStart && !Number.isNaN(goalStart.getTime())) {
+        goalStart.setHours(0, 0, 0, 0);
+        if (nextDate < goalStart) {
+          return res
+            .status(400)
+            .json({ message: 'Task date must be within the goal timeline' });
+        }
+      }
+
+      if (goalEnd && !Number.isNaN(goalEnd.getTime())) {
+        goalEnd.setHours(23, 59, 59, 999);
+        if (nextDate > goalEnd) {
+          return res
+            .status(400)
+            .json({ message: 'Task date must be within the goal timeline' });
+        }
       }
 
       const today = new Date();

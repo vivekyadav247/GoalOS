@@ -5,8 +5,7 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 const PATTERNS = [
   { value: 'ALL_DAYS', label: 'Same for all days' },
   { value: 'WEEKDAY_WEEKEND', label: 'Mon-Fri same, weekend different' },
-  { value: 'MON_SAT', label: 'Mon-Sat same, Sunday different' },
-  { value: 'CUSTOM', label: 'Custom per day' }
+  { value: 'MON_SAT', label: 'Mon-Sat same, Sunday different' }
 ];
 
 const normalizeTask = (value) => (typeof value === 'string' ? value.trim() : '');
@@ -88,8 +87,10 @@ const WeekPlanner = ({
   }, [tasks]);
 
   const formatRangeLabel = () => {
-    const start = new Date(week.startDate);
-    const end = new Date(week.endDate);
+    const startValue = week.rangeStart || week.startDate;
+    const endValue = week.rangeEnd || week.endDate;
+    const start = new Date(startValue);
+    const end = new Date(endValue);
     const startLabel = start.toLocaleDateString(undefined, {
       month: 'short',
       day: 'numeric'
