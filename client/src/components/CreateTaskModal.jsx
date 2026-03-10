@@ -61,13 +61,10 @@ const CreateTaskModal = ({
 
     if (form.date) {
       const today = new Date();
-      const todayKey = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate()
-      )
-        .toISOString()
-        .slice(0, 10);
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const todayKey = `${year}-${month}-${day}`;
 
       if (form.date < todayKey) {
         setDateError('Tasks cannot be created for past dates');
@@ -138,7 +135,13 @@ const CreateTaskModal = ({
               name="date"
               value={form.date}
               onChange={handleChange}
-              min={new Date().toISOString().slice(0, 10)}
+              min={(() => {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+              })()}
               required
             />
             {dateError ? (

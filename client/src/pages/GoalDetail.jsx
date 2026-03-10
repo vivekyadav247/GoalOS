@@ -121,6 +121,13 @@ const GoalDetail = () => {
         return '';
       }
 
+      const formatLocalDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -129,14 +136,14 @@ const GoalDetail = () => {
         if (!Number.isNaN(end.getTime())) {
           end.setHours(23, 59, 59, 999);
           if (today.getTime() >= start.getTime() && today.getTime() <= end.getTime()) {
-            return today.toISOString().slice(0, 10);
+            return formatLocalDate(today);
           }
         }
       }
 
-      start.setDate(start.getDate() + 1);
-      start.setHours(0, 0, 0, 0);
-      return start.toISOString().slice(0, 10);
+      // Fallback: use the week's own start date (local date-only)
+      // to ensure the task is always created inside the selected week.
+      return formatLocalDate(start);
     },
     [getWeekById]
   );
