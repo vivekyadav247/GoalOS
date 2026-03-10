@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 
 const DAYS = 7;
+const CELL_SIZE = 14;
+const CELL_GAP = 4;
 
 const numberFormatter = new Intl.NumberFormat();
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -121,39 +123,37 @@ const TaskHeatmap = ({ tasks = [] }) => {
   const todayKey = toDateKey(new Date());
   const todayCount = allCountsByDate.get(todayKey) || 0;
 
-  const months = useMemo(() => {
-    const items = [];
+  const yearGridStart = useMemo(() => {
+    const first = new Date(selectedYear, 0, 1);
+    const offset = first.getDay();
+    const start = new Date(first);
+    start.setDate(first.getDate() - offset);
+    return start;
+  }, [selectedYear]);
 
-    for (let month = 0; month < 12; month += 1) {
-      const firstDay = new Date(selectedYear, month, 1);
-      const startOffset = firstDay.getDay();
-      const daysInMonth = new Date(selectedYear, month + 1, 0).getDate();
-      const totalSlots = startOffset + daysInMonth;
-      const rows = Math.ceil(totalSlots / DAYS);
-      const totalCells = rows * DAYS;
-      const cells = [];
+  const yearGridEnd = useMemo(() => {
+    const last = new Date(selectedYear, 11, 31);
+    const offset = (6 - last.getDay() + 7) % 7;
+    const end = new Date(last);
+    end.setDate(last.getDate() + offset);
+    return end;
+  }, [selectedYear]);
 
-      for (let i = 0; i < totalCells; i += 1) {
-        if (i < startOffset) {
-          cells.push({
-            type: 'empty',
-            key: `m${month}-e${i}`
-          });
-          continue;
-        }
+  const totalWeeks = useMemo(() => {
+    const totalDays = dayDiff(yearGridEnd, yearGridStart) + 1;
+    return Math.ceil(totalDays / DAYS);
+  }, [yearGridEnd, yearGridStart]);
 
-        const dayNumber = i - startOffset + 1;
-        if (dayNumber > daysInMonth) {
-          cells.push({
-            type: 'empty',
-            key: `m${month}-e${i}`
-          });
-          continue;
-        }
+  const gridCells = useMemo(() => {
+    const cells = [];
+    for (let week = 0; week < totalWeeks; week += 1) {
+      for (let day = 0; day < DAYS; day += 1) {
+        const date = new Date(yearGridStart);
+        date.setDate(yearGridStart.getDate() + week * DAYS + day);
 
-        const date = new Date(selectedYear, month, dayNumber);
+        const inYear = date.getFullYear() === selectedYear;
         const key = toDateKey(date);
-        const count = countsByDate.get(key) || 0;
+        const count = inYear ? countsByDate.get(key) || 0 : 0;
         const stepLabel = count === 1 ? 'step' : 'steps';
         const tooltipText =
           count === 0
@@ -161,24 +161,36 @@ const TaskHeatmap = ({ tasks = [] }) => {
             : `${count} ${stepLabel} on ${dateFormatter.format(date)}`;
 
         cells.push({
-          type: 'day',
-          key,
-          dayNumber,
+          key: `${week}-${day}-${key}`,
+          inYear,
           count,
           isToday: key === todayKey && selectedYear === currentYear,
           tooltip: tooltipText
         });
       }
+    }
+    return cells;
+  }, [totalWeeks, yearGridStart, countsByDate, selectedYear, todayKey, currentYear]);
 
-      items.push({
+  const gridWidth = useMemo(() => {
+    if (!totalWeeks) return 0;
+    return totalWeeks * CELL_SIZE + (totalWeeks - 1) * CELL_GAP;
+  }, [totalWeeks]);
+
+  const monthLabels = useMemo(() => {
+    const labels = [];
+    for (let month = 0; month < 12; month += 1) {
+      const firstDay = new Date(selectedYear, month, 1);
+      const weekIndex = Math.floor(dayDiff(firstDay, yearGridStart) / DAYS);
+      if (weekIndex < 0 || weekIndex >= totalWeeks) continue;
+      labels.push({
         key: `${selectedYear}-${month}`,
         label: monthFormatter.format(firstDay),
-        cells
+        left: weekIndex * (CELL_SIZE + CELL_GAP)
       });
     }
-
-    return items;
-  }, [selectedYear, countsByDate, todayKey]);
+    return labels;
+  }, [selectedYear, totalWeeks, yearGridStart]);
 
   const totalSubmissions = useMemo(
     () => Array.from(countsByDate.values()).reduce((sum, count) => sum + count, 0),
@@ -276,48 +288,45 @@ const TaskHeatmap = ({ tasks = [] }) => {
         </div>
       </div>
 
-      <div className="overflow-x-hidden">
-        <div className="grid gap-6 px-1 py-1 sm:grid-cols-2 xl:grid-cols-3">
-          {months.map((month) => (
-            <div
-              key={month.key}
-              className="w-full"
-            >
-              <p className="mb-2 text-xs font-semibold text-slate-500">{month.label}</p>
-              <div
-                className="grid grid-cols-7 gap-1.5"
-              >
-                {month.cells.map((cell) => {
-                  if (cell.type === 'empty') {
-                    return (
-                      <span
-                        key={cell.key}
-                        className="aspect-square w-full rounded-[3px] bg-transparent"
-                        aria-hidden="true"
-                      />
-                    );
-                  }
-
-                  return (
-                    <span
-                      key={`${month.key}-${cell.key}`}
-                      className={[
-                        'aspect-square w-full rounded-[3px]',
-                        colorByCount(cell.count),
-                        cell.isToday
-                          ? cell.count > 0
-                            ? 'ring-2 ring-blue-300 ring-offset-1 ring-offset-white'
-                            : 'ring-2 ring-slate-300 ring-offset-1 ring-offset-white'
-                          : ''
-                      ].join(' ')}
-                      title={cell.tooltip}
-                      aria-label={cell.tooltip}
-                    />
-                  );
-                })}
-              </div>
+      <div className="overflow-x-auto">
+        <div className="min-w-max px-2 py-2">
+          <div style={{ width: `${gridWidth}px` }}>
+            <div className="relative mb-2 h-4 text-xs text-slate-500">
+              {monthLabels.map((month) => (
+                <span key={month.key} className="absolute top-0" style={{ left: `${month.left}px` }}>
+                  {month.label}
+                </span>
+              ))}
             </div>
-          ))}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${totalWeeks}, ${CELL_SIZE}px)`,
+                gridTemplateRows: `repeat(${DAYS}, ${CELL_SIZE}px)`,
+                gridAutoFlow: 'column',
+                gap: `${CELL_GAP}px`,
+                width: `${gridWidth}px`,
+                minWidth: `${gridWidth}px`
+              }}
+            >
+              {gridCells.map((cell) => (
+                <span
+                  key={cell.key}
+                  className={[
+                    'h-[14px] w-[14px] rounded-[3px]',
+                    cell.inYear ? colorByCount(cell.count) : 'bg-transparent',
+                    cell.isToday
+                      ? cell.count > 0
+                        ? 'ring-2 ring-blue-300 ring-offset-1 ring-offset-white'
+                        : 'ring-2 ring-slate-300 ring-offset-1 ring-offset-white'
+                      : ''
+                  ].join(' ')}
+                  title={cell.tooltip}
+                  aria-label={cell.tooltip}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
