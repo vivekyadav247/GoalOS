@@ -9,11 +9,26 @@ const toDateKey = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-const countToClass = (count) => {
-  if (count >= 4) return 'bg-blue-600 text-white border-blue-600';
-  if (count >= 2) return 'bg-blue-200 text-blue-900 border-blue-200';
-  if (count >= 1) return 'bg-blue-100 text-blue-900 border-blue-100';
-  return 'bg-white text-slate-700 border-slate-200';
+const buildTooltip = ({ label, isPast, isToday, stats }) => {
+  const lines = [label];
+  if (isPast) {
+    lines.push(`Completed: ${stats.completed}`, `Missed: ${stats.pending}`);
+    return lines.join('\n');
+  }
+
+  if (isToday) {
+    lines.push(
+      `Today: ${stats.total} ${stats.total === 1 ? 'task' : 'tasks'}`,
+      `Done: ${stats.completed}`,
+      `Pending: ${stats.pending}`
+    );
+    return lines.join('\n');
+  }
+
+  lines.push(
+    `${stats.total} upcoming ${stats.total === 1 ? 'task' : 'tasks'}`
+  );
+  return lines.join('\n');
 };
 
 const CalendarView = ({ monthDate, tasks, onPrev, onNext, disablePrev, disableNext }) => {
@@ -28,14 +43,21 @@ const CalendarView = ({ monthDate, tasks, onPrev, onNext, disablePrev, disableNe
   today.setHours(0, 0, 0, 0);
   const todayKey = toDateKey(today);
 
-  const countsByDate = new Map();
+  const statsByDate = new Map();
   for (const task of tasks) {
     if (!task?.date) continue;
     const date = new Date(task.date);
     if (Number.isNaN(date.getTime())) continue;
     if (date.getFullYear() !== year || date.getMonth() !== month) continue;
     const key = toDateKey(date);
-    countsByDate.set(key, (countsByDate.get(key) || 0) + 1);
+    const current = statsByDate.get(key) || { total: 0, completed: 0, pending: 0 };
+    current.total += 1;
+    if (task.completed) {
+      current.completed += 1;
+    } else {
+      current.pending += 1;
+    }
+    statsByDate.set(key, current);
   }
 
   const cells = [];
@@ -47,12 +69,12 @@ const CalendarView = ({ monthDate, tasks, onPrev, onNext, disablePrev, disableNe
     } else {
       const date = new Date(year, month, dayNumber);
       const key = toDateKey(date);
-      const count = countsByDate.get(key) || 0;
+      const stats = statsByDate.get(key) || { total: 0, completed: 0, pending: 0 };
       cells.push({
         type: 'day',
         key,
         dayNumber,
-        count,
+        stats,
         label: date.toLocaleDateString(undefined, {
           month: 'short',
           day: 'numeric',
@@ -109,19 +131,42 @@ const CalendarView = ({ monthDate, tasks, onPrev, onNext, disablePrev, disableNe
           }
 
           const isToday = cell.key === todayKey;
+          const cellDate = new Date(year, month, cell.dayNumber);
+          const isPast = cellDate < today;
+          const tooltip = buildTooltip({
+            label: cell.label,
+            isPast,
+            isToday,
+            stats: cell.stats
+          });
           return (
             <div
               key={cell.key}
               className={[
                 'relative flex h-12 items-center justify-center rounded-lg border text-sm font-semibold',
-                isToday ? 'bg-blue-600 text-white border-blue-600' : countToClass(cell.count)
+                isToday
+                  ? 'bg-blue-200 text-blue-900 border-blue-200'
+                  : 'bg-white text-slate-700 border-slate-200'
               ].join(' ')}
-              title={`${cell.label}\n${cell.count} ${cell.count === 1 ? 'task' : 'tasks'}`}
+              title={tooltip}
             >
               <span>{cell.dayNumber}</span>
-              {cell.count > 0 ? (
-                <span className="absolute bottom-1 right-1 rounded-full bg-blue-700/20 px-1 text-[10px] font-medium text-blue-900">
-                  {cell.count}
+              {isPast ? (
+                <span className="absolute bottom-1 right-1 flex items-center gap-1">
+                  {cell.stats.completed > 0 ? (
+                    <span className="rounded-full bg-emerald-100 px-1 text-[10px] font-semibold text-emerald-700">
+                      {cell.stats.completed}
+                    </span>
+                  ) : null}
+                  {cell.stats.pending > 0 ? (
+                    <span className="rounded-full bg-rose-100 px-1 text-[10px] font-semibold text-rose-700">
+                      {cell.stats.pending}
+                    </span>
+                  ) : null}
+                </span>
+              ) : cell.stats.total > 0 ? (
+                <span className="absolute bottom-1 right-1 rounded-full bg-blue-100 px-1 text-[10px] font-semibold text-blue-700">
+                  {cell.stats.total}
                 </span>
               ) : null}
             </div>

@@ -163,14 +163,15 @@ const Tasks = () => {
       {loading ? (
         <div className="surface-card p-6 text-sm text-slate-500">Loading tasks...</div>
       ) : (
-        <section className="grid gap-4 xl:grid-cols-3">
+        <section className="grid items-start gap-4 xl:grid-cols-3">
           {sections.map((section) => (
             <GraphCard
               key={section.key}
               title={section.title}
               subtitle={`${section.items.filter((task) => task.completed).length}/${section.items.length} completed`}
+              className="h-full"
             >
-              <div className="space-y-2">
+              <div className="max-h-[360px] space-y-2 overflow-y-auto pr-1 md:max-h-[420px]">
                 {section.items.length === 0 ? (
                   <p className="text-sm text-slate-500">No tasks in this bucket.</p>
                 ) : (

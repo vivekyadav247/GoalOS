@@ -327,26 +327,38 @@ const Dashboard = () => {
       {error ? <div className="surface-card p-4 text-sm text-rose-700">{error}</div> : null}
       {modalError ? <div className="surface-card p-4 text-sm text-rose-700">{modalError}</div> : null}
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Goals</p>
-          <p className="mt-3 text-2xl font-semibold text-slate-900">{summary.totalGoals}</p>
-          <p className="mt-1 text-xs text-slate-500">Active focus areas</p>
+      <section className="grid grid-cols-4 gap-2 md:gap-4">
+        <article className="rounded-xl border border-slate-200 bg-white p-2 text-center shadow-sm md:rounded-2xl md:p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">Goals</p>
+          <p className="mt-1 text-lg font-semibold text-slate-900 md:mt-3 md:text-2xl">
+            {summary.totalGoals}
+          </p>
+          <p className="mt-0.5 text-[10px] text-slate-500 md:mt-1 md:text-xs">Active</p>
         </article>
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Tasks Today</p>
-          <p className="mt-3 text-2xl font-semibold text-slate-900">{todaysTasks.length}</p>
-          <p className="mt-1 text-xs text-slate-500">Scheduled for today</p>
+        <article className="rounded-xl border border-slate-200 bg-white p-2 text-center shadow-sm md:rounded-2xl md:p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">Tasks</p>
+          <p className="mt-1 text-lg font-semibold text-slate-900 md:mt-3 md:text-2xl">
+            {todaysTasks.length}
+          </p>
+          <p className="mt-0.5 text-[10px] text-slate-500 md:mt-1 md:text-xs">Today</p>
         </article>
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Completed Tasks</p>
-          <p className="mt-3 text-2xl font-semibold text-slate-900">{summary.completedTasks}</p>
-          <p className="mt-1 text-xs text-slate-500">Marked as done</p>
+        <article className="rounded-xl border border-slate-200 bg-white p-2 text-center shadow-sm md:rounded-2xl md:p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">
+            Completed
+          </p>
+          <p className="mt-1 text-lg font-semibold text-slate-900 md:mt-3 md:text-2xl">
+            {summary.completedTasks}
+          </p>
+          <p className="mt-0.5 text-[10px] text-slate-500 md:mt-1 md:text-xs">Tasks</p>
         </article>
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Active Streak</p>
-          <p className="mt-3 text-2xl font-semibold text-slate-900">{activeStreak}</p>
-          <p className="mt-1 text-xs text-slate-500">{activeStreak === 1 ? 'Day in a row' : 'Days in a row'}</p>
+        <article className="rounded-xl border border-slate-200 bg-white p-2 text-center shadow-sm md:rounded-2xl md:p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">
+            Streak
+          </p>
+          <p className="mt-1 text-lg font-semibold text-slate-900 md:mt-3 md:text-2xl">{activeStreak}</p>
+          <p className="mt-0.5 text-[10px] text-slate-500 md:mt-1 md:text-xs">
+            {activeStreak === 1 ? 'Day' : 'Days'}
+          </p>
         </article>
       </section>
 
