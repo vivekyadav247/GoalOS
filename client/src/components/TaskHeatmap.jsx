@@ -62,7 +62,7 @@ const startOfWeek = (date) => {
 const dayDiff = (a, b) => Math.round((a.getTime() - b.getTime()) / 86400000);
 
 const isCountedTask = (task) => {
-  return Boolean(task?.date);
+  return Boolean(task?.date && task?.completed);
 };
 
 const colorByCount = (count) => {
