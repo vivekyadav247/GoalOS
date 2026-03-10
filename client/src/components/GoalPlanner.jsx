@@ -41,21 +41,29 @@ const GoalPlanner = ({
           <article key={month._id} className="surface-card overflow-hidden">
             <button
               type="button"
-              className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left sm:px-5"
+              className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition hover:bg-slate-50 sm:px-6 sm:py-5"
               onClick={() => onToggleMonth(month._id)}
             >
               <div>
-                <p className="text-base font-semibold text-slate-900">{month.monthName}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-base font-semibold text-slate-900 sm:text-lg">{month.monthName}</p>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                    {monthWeeks.length} weeks
+                  </span>
+                </div>
                 <p className="mt-1 text-xs text-slate-500">
-                  {monthStats.completed}/{monthStats.total} tasks completed - {monthStats.progress}%
+                  {monthStats.completed}/{monthStats.total} tasks completed
+                  <span className="ml-2 inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                    {monthStats.progress}%
+                  </span>
                 </p>
               </div>
               <span className="text-xs font-semibold text-slate-500">{monthOpen ? 'Hide' : 'Show'}</span>
             </button>
 
             {monthOpen ? (
-              <div className="border-t border-slate-100 px-4 py-4 sm:px-5">
-                <div className="space-y-2">
+              <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-4 sm:px-6 sm:py-5">
+                <div className="space-y-3">
                   {monthWeeks.length === 0 ? (
                     <p className="text-sm text-slate-500">No week plans yet.</p>
                   ) : (

@@ -42,6 +42,20 @@ const useGoalHierarchy = (goalId) => {
     refresh().catch(() => {});
   }, [refresh]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const handleRefresh = () => {
+      refresh().catch(() => {});
+    };
+
+    window.addEventListener('planner:refresh', handleRefresh);
+
+    return () => window.removeEventListener('planner:refresh', handleRefresh);
+  }, [refresh]);
+
   return {
     ...data,
     loading,

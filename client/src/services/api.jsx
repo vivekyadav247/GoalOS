@@ -100,7 +100,21 @@ api.interceptors.response.use(
   (error) => Promise.reject(error)
 );
 
+const PLANNER_REFRESH_EVENT = 'planner:refresh';
+
+const notifyPlannerRefresh = () => {
+  if (!hasWindow) {
+    return;
+  }
+  window.dispatchEvent(new CustomEvent(PLANNER_REFRESH_EVENT));
+};
+
 const unwrap = (promise) => promise.then((res) => res.data);
+const unwrapWithRefresh = (promise) =>
+  unwrap(promise).then((data) => {
+    notifyPlannerRefresh();
+    return data;
+  });
 const asArray = (value) => (Array.isArray(value) ? value : []);
 
 export const getApiErrorMessage = (error, fallback = 'Something went wrong') =>
@@ -113,30 +127,30 @@ export const authApi = {
 
 export const goalApi = {
   getGoals: () => unwrap(api.get('/goals')),
-  createGoal: (payload) => unwrap(api.post('/goals', payload)),
-  updateGoal: (id, payload) => unwrap(api.put(`/goals/${id}`, payload)),
-  deleteGoal: (id) => unwrap(api.delete(`/goals/${id}`))
+  createGoal: (payload) => unwrapWithRefresh(api.post('/goals', payload)),
+  updateGoal: (id, payload) => unwrapWithRefresh(api.put(`/goals/${id}`, payload)),
+  deleteGoal: (id) => unwrapWithRefresh(api.delete(`/goals/${id}`))
 };
 
 export const taskApi = {
   getAll: () => unwrap(api.get('/tasks')),
   getToday: () => unwrap(api.get('/tasks/today')),
   getByGoal: (goalId, params = {}) => unwrap(api.get(`/tasks/goal/${goalId}`, { params })),
-  create: (payload) => unwrap(api.post('/tasks', payload)),
-  update: (id, payload) => unwrap(api.put(`/tasks/${id}`, payload)),
-  remove: (id) => unwrap(api.delete(`/tasks/${id}`)),
+  create: (payload) => unwrapWithRefresh(api.post('/tasks', payload)),
+  update: (id, payload) => unwrapWithRefresh(api.put(`/tasks/${id}`, payload)),
+  remove: (id) => unwrapWithRefresh(api.delete(`/tasks/${id}`)),
   toggleComplete: (id, completed) => {
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
     const clientDate = `${year}-${month}-${day}`;
-    return unwrap(api.put(`/tasks/${id}`, { completed, clientDate }));
+    return unwrapWithRefresh(api.put(`/tasks/${id}`, { completed, clientDate }));
   }
 };
 
 export const weekApi = {
-  applyPattern: (payload) => unwrap(api.post('/weeks/pattern', payload))
+  applyPattern: (payload) => unwrapWithRefresh(api.post('/weeks/pattern', payload))
 };
 
 const startOfWeek = (date) => {

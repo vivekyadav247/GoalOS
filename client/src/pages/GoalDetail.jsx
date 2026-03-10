@@ -404,7 +404,27 @@ const GoalDetail = () => {
     setActionError('');
 
     try {
-      if (mode === 'WEEK') {
+      if (mode === 'GOAL') {
+        const allWeeks = getAllWeeks();
+        if (allWeeks.length === 0) {
+          throw new Error('No weeks found for this goal');
+        }
+
+        const rangeStartKey = goal?.startDate ? formatLocalDate(goal.startDate) : '';
+        const rangeEndKey = goal?.endDate ? formatLocalDate(goal.endDate) : '';
+
+        if (!rangeStartKey || !rangeEndKey) {
+          throw new Error('Goal timeline is missing');
+        }
+
+        for (const week of allWeeks) {
+          await applyPatternToWeek(week, {
+            ...payload,
+            rangeStart: rangeStartKey,
+            rangeEnd: rangeEndKey
+          });
+        }
+      } else if (mode === 'WEEK') {
         const week = getWeekById(weekId);
         if (!week) {
           throw new Error('Selected week not found');

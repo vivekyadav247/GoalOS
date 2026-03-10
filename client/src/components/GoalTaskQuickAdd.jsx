@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 const MODE_OPTIONS = [
   { value: 'GOAL', label: 'Overall goal' },
   { value: 'MONTH', label: 'Month' },
-  { value: 'WEEK', label: 'Week' }
+  { value: 'WEEK', label: 'Week' },
+  { value: 'GENERAL', label: 'General task' }
 ];
 
 const PATTERNS = [
@@ -148,17 +149,21 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
     [goal]
   );
 
-  const hasTimeline = monthOptions.length > 0 && weekOptions.length > 0;
-  const gridClassName = mode === 'GOAL' ? 'grid gap-4 md:grid-cols-1' : 'grid gap-4 md:grid-cols-2';
+  const hasGoalTimeline = Boolean(goal?.startDate && goal?.endDate);
+  const hasMonthWeekTimeline = monthOptions.length > 0 && weekOptions.length > 0;
+  const showLeftPane = mode === 'MONTH' || mode === 'WEEK';
+  const gridClassName = showLeftPane ? 'grid gap-4 md:grid-cols-2' : 'grid gap-4 md:grid-cols-1';
   const modeHint =
-    mode === 'GOAL'
-      ? 'Add one task inside this goal timeline.'
+    mode === 'GENERAL'
+      ? 'Add one task on any date within the goal timeline.'
+      : mode === 'GOAL'
+        ? 'Apply a weekly pattern across the full goal timeline.'
       : mode === 'MONTH'
         ? 'Apply the weekly pattern across this month.'
         : 'Apply the weekly pattern to a single week.';
 
   useEffect(() => {
-    if (mode !== 'GOAL') {
+    if (mode !== 'GENERAL') {
       return;
     }
 
@@ -221,7 +226,7 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
     event.preventDefault();
     setFormError('');
 
-    if (mode === 'GOAL') {
+    if (mode === 'GENERAL') {
       const trimmedTitle = title.trim();
       if (!trimmedTitle) {
         setFormError('Add a task title first.');
@@ -259,13 +264,18 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
       return;
     }
 
-    if (!hasTimeline) {
-      setFormError('Add a start and end date to this goal to plan by month or week.');
+    if (!hasPatternTasks) {
+      setFormError('Add at least one task in the pattern.');
       return;
     }
 
-    if (!hasPatternTasks) {
-      setFormError('Add at least one task in the pattern.');
+    if (mode === 'GOAL' && !hasGoalTimeline) {
+      setFormError('Add a start and end date to this goal to apply the overall pattern.');
+      return;
+    }
+
+    if ((mode === 'MONTH' || mode === 'WEEK') && !hasMonthWeekTimeline) {
+      setFormError('Add a start and end date to this goal to plan by month or week.');
       return;
     }
 
@@ -305,11 +315,13 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
   };
 
   const actionLabel =
-    mode === 'GOAL'
+    mode === 'GENERAL'
       ? 'Add Task'
-      : mode === 'MONTH'
-        ? 'Apply to Month'
-        : 'Apply to Week';
+      : mode === 'GOAL'
+        ? 'Apply to Goal'
+        : mode === 'MONTH'
+          ? 'Apply to Month'
+          : 'Apply to Week';
 
   return (
     <section className="surface-card p-4 md:p-5">
@@ -328,7 +340,7 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
       </div>
 
       <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           {MODE_OPTIONS.map((option) => (
             <button
               key={option.value}
@@ -344,9 +356,14 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
           ))}
         </div>
         <p className="text-xs text-slate-500">{modeHint}</p>
+        {mode === 'GOAL' && !hasGoalTimeline ? (
+          <p className="text-xs text-amber-600">
+            Add a start and end date to this goal to unlock overall planning.
+          </p>
+        ) : null}
 
         <div className={gridClassName}>
-          {mode !== 'GOAL' ? (
+          {showLeftPane ? (
             <div className="space-y-3">
               {mode === 'MONTH' ? (
                 <label className="text-xs font-semibold text-slate-600">
@@ -355,7 +372,7 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
                     className="input-base mt-1"
                     value={monthId}
                     onChange={(event) => setMonthId(event.target.value)}
-                    disabled={!hasTimeline}
+                    disabled={!hasMonthWeekTimeline}
                   >
                     {monthOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -376,7 +393,7 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
                     className="input-base mt-1"
                     value={weekId}
                     onChange={(event) => setWeekId(event.target.value)}
-                    disabled={!hasTimeline}
+                    disabled={!hasMonthWeekTimeline}
                   >
                     {weekOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -387,7 +404,7 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
                 </label>
               ) : null}
 
-              {!hasTimeline && mode !== 'GOAL' ? (
+              {!hasMonthWeekTimeline && (mode === 'MONTH' || mode === 'WEEK') ? (
                 <p className="text-xs text-amber-600">
                   Add a start and end date to this goal to unlock month/week planning.
                 </p>
@@ -396,7 +413,7 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
           ) : null}
 
           <div className="space-y-3">
-            {mode === 'GOAL' ? (
+            {mode === 'GENERAL' ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="text-xs font-semibold text-slate-600">
                   Task title
