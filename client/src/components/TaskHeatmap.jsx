@@ -227,12 +227,18 @@ const TaskHeatmap = ({ tasks = [] }) => {
         const inYear = date.getFullYear() === selectedYear;
         const key = toDateKey(date);
         const count = inYear ? countsByDate.get(key) || 0 : 0;
+        const stepLabel = count === 1 ? 'step' : 'steps';
+        const tooltipText =
+          count === 0
+            ? `No steps on ${dateFormatter.format(date)}`
+            : `${count} ${stepLabel} on ${dateFormatter.format(date)}`;
+
         cells.push({
           type: 'day',
           key: `${column.week}-${day}-${key}`,
           inYear,
           count,
-          tooltip: `${dateFormatter.format(date)}\n${count} ${count === 1 ? 'task' : 'tasks'} completed`
+          tooltip: tooltipText
         });
       }
     }
@@ -303,7 +309,7 @@ const TaskHeatmap = ({ tasks = [] }) => {
           <p className="break-words text-2xl font-semibold text-slate-900 md:text-4xl">
             {numberFormatter.format(totalSubmissions)}{' '}
             <span className="text-xl font-medium text-slate-600 md:text-3xl">
-              submissions in {selectedYear}
+              {totalSubmissions === 1 ? 'step' : 'steps'} in {selectedYear}
             </span>
           </p>
         </div>
