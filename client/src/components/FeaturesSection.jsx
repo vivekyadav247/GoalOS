@@ -1,3 +1,4 @@
+﻿import { BrandName } from './Logo';
 import { Target, CalendarDays, CheckSquare, ActivitySquare, LineChart, CalendarRange } from 'lucide-react';
 
 const FEATURES = [
@@ -19,7 +20,7 @@ const FEATURES = [
   {
     icon: CheckSquare,
     title: 'Daily Task Tracking',
-    description: 'See today’s priorities and keep execution consistent.'
+    description: "See today's priorities and keep execution consistent."
   },
   {
     icon: LineChart,
@@ -38,7 +39,7 @@ const FeaturesSection = () => {
     <section className="text-center" aria-labelledby="features-heading">
       <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Features</p>
       <h2 id="features-heading" className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 md:text-3xl">
-        Everything you need to run the GoalOS planning system.
+        Everything you need to run the <BrandName /> planning system.
       </h2>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">

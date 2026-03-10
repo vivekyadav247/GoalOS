@@ -1,4 +1,5 @@
-﻿import { useState } from 'react';
+﻿import { BrandName } from '../components/Logo';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi, setAuthSession } from '../services/api';
 
@@ -60,7 +61,7 @@ const Login = () => {
       </form>
 
       <p className="mt-4 text-sm text-slate-500">
-        New to GoalOS?{' '}
+        New to <BrandName />?{' '}
         <Link to="/register" className="font-medium text-blue-600 hover:text-blue-700">
           Create account
         </Link>
@@ -70,4 +71,3 @@ const Login = () => {
 };
 
 export default Login;
-

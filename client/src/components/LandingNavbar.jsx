@@ -1,3 +1,4 @@
+﻿import Logo from './Logo';
 import { useState } from 'react';
 import { SignUpButton } from '@clerk/react';
 import { Menu, X } from 'lucide-react';
@@ -14,19 +15,13 @@ const LandingNavbar = ({ onFeaturesClick, onHowItWorksClick, onProductivityClick
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/80 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 md:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 md:px-6 lg:px-8">
         <button
           type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="flex items-center gap-3"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-xs font-bold text-white">
-            GO
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-semibold text-slate-900">GoalOS</p>
-            <p className="text-xs text-slate-500">Goal based productivity planner</p>
-          </div>
+          <Logo size="lg" />
         </button>
 
         <nav className="hidden items-center gap-3 md:flex">

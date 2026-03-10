@@ -1,3 +1,5 @@
+﻿import { BrandName } from './Logo';
+
 const HIERARCHY = [
   {
     label: 'Goal',
@@ -28,7 +30,7 @@ const HowItWorksSection = () => {
       aria-labelledby="how-it-works-heading"
     >
       <div className="mx-auto max-w-xl lg:mx-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">How GoalOS Works</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">How <BrandName /> Works</p>
         <h2
           id="how-it-works-heading"
           className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 md:text-3xl"
@@ -36,7 +38,7 @@ const HowItWorksSection = () => {
           Plan with a clear hierarchy from vision to execution.
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-          GoalOS is designed as a planning tree. You start with one goal, break it into months,
+          <BrandName /> is designed as a planning tree. You start with one goal, break it into months,
           convert each month into weekly focus, and finish daily tasks that move progress forward.
         </p>
       </div>
@@ -50,7 +52,7 @@ const HowItWorksSection = () => {
                 <p className="mt-1 text-xs text-slate-600">{item.detail}</p>
               </div>
               {index < HIERARCHY.length - 1 ? (
-                <div className="py-1 text-center text-xs font-semibold text-blue-500">↓</div>
+                <div className="py-1 text-center text-xs font-semibold text-blue-500">v</div>
               ) : null}
             </div>
           ))}

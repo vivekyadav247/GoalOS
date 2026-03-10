@@ -1,3 +1,5 @@
+﻿import { BrandName } from './Logo';
+
 const ProductivitySection = () => {
   return (
     <section className="grid gap-8 lg:grid-cols-2 lg:items-center">
@@ -7,7 +9,7 @@ const ProductivitySection = () => {
           Turn long-term goals into structured daily actions.
         </h2>
         <p className="mt-2 text-sm text-slate-600">
-          Most planners stop at tasks. GoalOS forces each task to live on a date inside a clear hierarchy:
+          Most planners stop at tasks. <BrandName /> forces each task to live on a date inside a clear hierarchy:
           a goal is broken into months, then weeks, then days. The result: you always know what today is for.
         </p>
 
@@ -121,4 +123,3 @@ const ProductivitySection = () => {
 };
 
 export default ProductivitySection;
-

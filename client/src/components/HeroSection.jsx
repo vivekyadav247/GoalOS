@@ -1,3 +1,4 @@
+﻿import { BrandName } from './Logo';
 import { SignInButton, SignUpButton } from '@clerk/react';
 
 const previewTasks = ['Review sprint goals', 'Write 3 tasks', 'Complete deep work block'];
@@ -8,14 +9,19 @@ const HeroSection = ({ onViewFeatures }) => {
       <div className="animate-orb pointer-events-none absolute -left-20 top-0 h-56 w-56 rounded-full bg-blue-500/20 blur-3xl" />
       <div className="animate-orb-delayed pointer-events-none absolute -right-8 bottom-0 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" />
 
-      <div className="animate-fade-up relative z-10 mx-auto max-w-3xl">
-        <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+      <div className="animate-fade-up relative z-10 mx-auto flex max-w-3xl flex-col items-center">
+        <div className="flex flex-col items-center">
+          <BrandName className="text-3xl font-semibold tracking-tight text-white sm:text-4xl" accentClassName="text-blue-400" />
+          <p className="mt-2 text-sm text-slate-500 sm:text-base">Small steps and consistency lead to big goals</p>
+        </div>
+
+        <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">
           Turn Your Goals Into Daily Action
         </h1>
 
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-slate-200 sm:text-lg">
-          GoalOS helps you transform big ambitions into structured daily work by organizing your
-          goals into months, weeks, and daily tasks.
+          <BrandName className="text-white" accentClassName="text-blue-400" /> helps you transform big ambitions into structured daily work by organizing
+          your goals into months, weeks, and daily tasks.
         </p>
 
         <div className="mt-8 flex flex-col items-center justify-center gap-3 md:flex-row">

@@ -1,3 +1,5 @@
+﻿import { BrandName } from './Logo';
+
 const metricItems = [
   { label: 'Goals', value: '4' },
   { label: 'Tasks Today', value: '6' },
@@ -34,7 +36,9 @@ const DashboardPreview = () => {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Today</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">GoalOS Dashboard</p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">
+              <BrandName /> Dashboard
+            </p>
           </div>
           <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">Streak 8</span>
         </div>

@@ -1,3 +1,4 @@
+﻿import { BrandName } from './Logo';
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from './navigation';
 import { LayoutDashboard, Target, CheckSquare, BarChart2, CalendarDays } from 'lucide-react';
@@ -15,11 +16,9 @@ const Sidebar = () => {
     <aside className="hidden h-screen w-72 shrink-0 border-r border-slate-200 bg-white/90 p-6 lg:flex lg:flex-col">
       <div>
         <div className="mb-10 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white">
-            GO
-          </div>
+          <img src="/logo.png" alt="GoalOS logo" className="h-10 w-10 rounded-xl" />
           <div>
-            <p className="text-sm font-semibold text-slate-900">GoalOS</p>
+            <BrandName className="text-sm font-semibold text-slate-900" />
             <p className="text-xs text-slate-500">Personal productivity</p>
           </div>
         </div>
@@ -61,4 +60,3 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
-

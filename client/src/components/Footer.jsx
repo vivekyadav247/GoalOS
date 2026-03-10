@@ -1,11 +1,12 @@
-import { Instagram, Linkedin, Github } from 'lucide-react';
+﻿import { Instagram, Linkedin, Github } from 'lucide-react';
+import { BrandName } from './Logo';
 
 const Footer = () => {
   return (
     <footer className="border-t border-slate-200/80 bg-white/90">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 text-center md:grid-cols-3 md:text-left md:px-6 lg:px-8">
         <div className="mx-auto md:mx-0">
-          <p className="text-base font-semibold text-slate-900">GoalOS</p>
+          <BrandName className="text-base font-semibold text-slate-900" />
           <p className="mt-2 text-sm text-slate-600">Goal planning system for daily execution.</p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500 md:justify-start">
             <a href="#" className="hover:text-blue-700">
@@ -14,7 +15,9 @@ const Footer = () => {
             <a href="#" className="hover:text-blue-700">
               Privacy
             </a>
-            <span>© {new Date().getFullYear()} GoalOS</span>
+            <span>
+              © {new Date().getFullYear()} <BrandName />
+            </span>
           </div>
         </div>
 

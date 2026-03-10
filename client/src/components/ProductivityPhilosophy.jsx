@@ -1,3 +1,5 @@
+﻿import { BrandName } from './Logo';
+
 const ProductivityPhilosophy = () => {
   return (
     <section className="surface-card p-5 md:p-7" aria-labelledby="philosophy-heading">
@@ -7,7 +9,7 @@ const ProductivityPhilosophy = () => {
       </h2>
       <div className="mt-4 grid gap-4 text-sm text-slate-600 md:grid-cols-2">
         <p>
-          GoalOS focuses on consistent daily progress instead of short bursts. Small actions every day
+          <BrandName /> focuses on consistent daily progress instead of short bursts. Small actions every day
           compound into visible outcomes over time.
         </p>
         <p>

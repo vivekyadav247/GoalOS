@@ -1,3 +1,4 @@
+﻿import Logo from './Logo';
 import { Link, NavLink } from 'react-router-dom';
 import { Show, UserButton, useUser } from '@clerk/react';
 import { Flame, UserCircle2 } from 'lucide-react';
@@ -59,10 +60,7 @@ const Navbar = () => {
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 md:px-6">
         <Link to="/" className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-xs font-bold text-white">
-            GO
-          </span>
-          <span className="text-lg font-semibold tracking-tight text-slate-900">GoalOS</span>
+          <Logo size="sm" />
         </Link>
 
         <nav className="hidden items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 md:flex">

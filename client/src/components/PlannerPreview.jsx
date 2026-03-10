@@ -1,4 +1,6 @@
-﻿const COLUMNS = 28;
+﻿import { BrandName } from './Logo';
+
+const COLUMNS = 28;
 const ROWS = 7;
 const GAP_COLUMNS = 1;
 const MONTH_GROUPS = [4, 4, 5, 5, 5, 5];
@@ -65,7 +67,7 @@ const PlannerPreview = () => {
           Visualize Your Consistency
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-          GoalOS includes a contribution-style productivity heatmap similar to GitHub or LeetCode.
+          <BrandName /> includes a contribution-style productivity heatmap similar to GitHub or LeetCode.
           Each completed task fills a cell in a calendar grid. Over time you see consistency
           patterns and streaks.
         </p>
@@ -81,44 +83,44 @@ const PlannerPreview = () => {
         <div className="mt-4 overflow-hidden sm:overflow-x-auto">
           <div className="mx-auto flex w-full justify-center">
             <div className="w-max">
-            <div
-              style={{
-                '--cell-size': 'clamp(6px, 1.8vw, 10px)',
-                '--cell-gap': 'clamp(2px, 0.5vw, 3px)',
-                display: 'grid',
-                gridTemplateColumns: `repeat(${EXPANDED_COLUMNS}, var(--cell-size))`,
-                gridTemplateRows: `repeat(${ROWS}, var(--cell-size))`,
-                gridAutoFlow: 'column',
-                gap: 'var(--cell-gap)'
-              }}
-            >
-              {expandedCells.map((value, index) => (
-                <div
-                  key={index}
-                  className={value === null ? 'rounded-[2px] bg-transparent' : `rounded-[2px] ${levelClass(value)}`}
-                  style={{ width: 'var(--cell-size)', height: 'var(--cell-size)' }}
-                  aria-hidden={value === null}
-                />
-              ))}
-            </div>
+              <div
+                style={{
+                  '--cell-size': 'clamp(6px, 1.8vw, 10px)',
+                  '--cell-gap': 'clamp(2px, 0.5vw, 3px)',
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(${EXPANDED_COLUMNS}, var(--cell-size))`,
+                  gridTemplateRows: `repeat(${ROWS}, var(--cell-size))`,
+                  gridAutoFlow: 'column',
+                  gap: 'var(--cell-gap)'
+                }}
+              >
+                {expandedCells.map((value, index) => (
+                  <div
+                    key={index}
+                    className={value === null ? 'rounded-[2px] bg-transparent' : `rounded-[2px] ${levelClass(value)}`}
+                    style={{ width: 'var(--cell-size)', height: 'var(--cell-size)' }}
+                    aria-hidden={value === null}
+                  />
+                ))}
+              </div>
 
-            <div
-              className="mt-2 grid text-[10px] text-slate-400 sm:text-[11px]"
-              style={{
-                gridTemplateColumns: `repeat(${EXPANDED_COLUMNS}, var(--cell-size))`,
-                columnGap: 'var(--cell-gap)'
-              }}
-            >
-              {monthMarks.map((month) => (
-                <span
-                  key={month.label}
-                  className="text-center"
-                  style={{ gridColumn: `${month.start + 1} / span ${month.span}` }}
-                >
-                  {month.label}
-                </span>
-              ))}
-            </div>
+              <div
+                className="mt-2 grid text-[10px] text-slate-400 sm:text-[11px]"
+                style={{
+                  gridTemplateColumns: `repeat(${EXPANDED_COLUMNS}, var(--cell-size))`,
+                  columnGap: 'var(--cell-gap)'
+                }}
+              >
+                {monthMarks.map((month) => (
+                  <span
+                    key={month.label}
+                    className="text-center"
+                    style={{ gridColumn: `${month.start + 1} / span ${month.span}` }}
+                  >
+                    {month.label}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>

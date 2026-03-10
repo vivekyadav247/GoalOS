@@ -1,3 +1,5 @@
+﻿import { BrandName } from './Logo';
+
 const ProblemSection = () => {
   return (
     <section className="surface-card p-5 sm:p-7" aria-labelledby="problem-heading">
@@ -14,7 +16,7 @@ const ProblemSection = () => {
           unclear.
         </p>
         <p>
-          Without a daily system, motivation fades. GoalOS solves this by turning long-term goals
+          Without a daily system, motivation fades. <BrandName /> solves this by turning long-term goals
           into small daily actions you can execute immediately.
         </p>
       </div>

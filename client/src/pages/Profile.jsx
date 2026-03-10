@@ -1,3 +1,4 @@
+﻿import { BrandName } from '../components/Logo';
 import { useUser } from '@clerk/react';
 
 const Profile = () => {
@@ -12,7 +13,7 @@ const Profile = () => {
       <section className="surface-card p-5 md:p-6">
         <h2 className="page-title">Profile</h2>
         <p className="page-subtitle">
-          Manage your GoalOS identity details. Account deletion is disabled in this app
+          Manage your <BrandName /> identity details. Account deletion is disabled in this app
           to prevent orphaned planner data linked to your <code>clerkId</code>.
         </p>
       </section>
