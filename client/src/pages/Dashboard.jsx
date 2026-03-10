@@ -331,35 +331,27 @@ const Dashboard = () => {
 
       <section className="grid grid-cols-4 gap-2 md:gap-4">
         <article className="rounded-xl border border-slate-200 bg-white p-2 text-center shadow-sm md:rounded-2xl md:p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">Goals</p>
-          <p className="mt-1 text-lg font-semibold text-slate-900 md:mt-3 md:text-2xl">
-            {summary.totalGoals}
+          <p className="text-lg font-semibold text-slate-900 md:text-2xl">{summary.totalGoals}</p>
+          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">
+            Goals
           </p>
-          <p className="mt-0.5 text-[10px] text-slate-500 md:mt-1 md:text-xs">Active</p>
         </article>
         <article className="rounded-xl border border-slate-200 bg-white p-2 text-center shadow-sm md:rounded-2xl md:p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">Tasks</p>
-          <p className="mt-1 text-lg font-semibold text-slate-900 md:mt-3 md:text-2xl">
-            {todaysTasks.length}
+          <p className="text-lg font-semibold text-slate-900 md:text-2xl">{todaysTasks.length}</p>
+          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">
+            Today
           </p>
-          <p className="mt-0.5 text-[10px] text-slate-500 md:mt-1 md:text-xs">Today</p>
         </article>
         <article className="rounded-xl border border-slate-200 bg-white p-2 text-center shadow-sm md:rounded-2xl md:p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">
+          <p className="text-lg font-semibold text-slate-900 md:text-2xl">{summary.completedTasks}</p>
+          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">
             Completed
           </p>
-          <p className="mt-1 text-lg font-semibold text-slate-900 md:mt-3 md:text-2xl">
-            {summary.completedTasks}
-          </p>
-          <p className="mt-0.5 text-[10px] text-slate-500 md:mt-1 md:text-xs">Tasks</p>
         </article>
         <article className="rounded-xl border border-slate-200 bg-white p-2 text-center shadow-sm md:rounded-2xl md:p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">
+          <p className="text-lg font-semibold text-slate-900 md:text-2xl">{activeStreak}</p>
+          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">
             Streak
-          </p>
-          <p className="mt-1 text-lg font-semibold text-slate-900 md:mt-3 md:text-2xl">{activeStreak}</p>
-          <p className="mt-0.5 text-[10px] text-slate-500 md:mt-1 md:text-xs">
-            {activeStreak === 1 ? 'Day' : 'Days'}
           </p>
         </article>
       </section>

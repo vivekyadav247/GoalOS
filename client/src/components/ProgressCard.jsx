@@ -16,17 +16,13 @@ const ProgressCard = ({ title, value, subtitle, tone = 'blue' }) => {
   };
 
   return (
-    <article className="surface-card p-3 text-center md:p-5 md:text-left">
-      <div className="flex flex-col items-center justify-between gap-2 md:flex-row md:items-start md:gap-3">
-        <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 md:text-xs">{title}</p>
-          <p className="mt-1 text-lg font-semibold text-slate-900 md:mt-2 md:text-2xl">{value}</p>
-          {subtitle && <p className="mt-1 text-[10px] text-slate-500 md:mt-2 md:text-xs">{subtitle}</p>}
-        </div>
+    <article className="surface-card p-3 md:p-5">
+      <div className="flex items-center gap-3 md:items-start md:justify-between">
         <span
           className={[
-            'inline-flex h-7 w-7 items-center justify-center rounded-lg md:h-8 md:w-8',
-            toneStyles[tone] || toneStyles.blue
+            'inline-flex h-8 w-8 items-center justify-center rounded-lg',
+            toneStyles[tone] || toneStyles.blue,
+            'order-1 md:order-2'
           ].join(' ')}
         >
           {(() => {
@@ -34,6 +30,13 @@ const ProgressCard = ({ title, value, subtitle, tone = 'blue' }) => {
             return <Icon className="h-4 w-4" aria-hidden="true" />;
           })()}
         </span>
+        <div className="order-2 min-w-0 md:order-1">
+          <p className="hidden text-xs font-semibold uppercase tracking-wide text-slate-500 md:block">{title}</p>
+          <p className="text-lg font-semibold text-slate-900 md:mt-2 md:text-2xl">{value}</p>
+          {subtitle ? (
+            <p className="mt-1 hidden text-xs text-slate-500 md:block">{subtitle}</p>
+          ) : null}
+        </div>
       </div>
     </article>
   );

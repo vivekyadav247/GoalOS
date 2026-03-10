@@ -11,7 +11,6 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   year: 'numeric'
 });
 const monthFormatter = new Intl.DateTimeFormat(undefined, { month: 'short' });
-const weekDayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 const normalizeDate = (value) => {
   if (!value) return null;
@@ -112,6 +111,10 @@ const TaskHeatmap = ({ tasks = [] }) => {
     if (selectedYear !== currentYear) return '';
     return toDateKey(new Date());
   }, [selectedYear, currentYear]);
+  const todayCount = useMemo(() => {
+    if (!todayKey) return 0;
+    return countsByDate.get(todayKey) || 0;
+  }, [countsByDate, todayKey]);
 
   const months = useMemo(() => {
     const items = [];
@@ -208,10 +211,22 @@ const TaskHeatmap = ({ tasks = [] }) => {
   }, [countsByDate]);
 
   const currentStreak = useMemo(() => {
-    const anchor =
-      selectedYear === currentYear
-        ? normalizeDate(new Date())
-        : new Date(selectedYear, 11, 31);
+    let anchor = null;
+
+    if (selectedYear === currentYear) {
+      const todayDate = normalizeDate(new Date());
+      if (!todayDate) return 0;
+      if (todayCount > 0) {
+        anchor = todayDate;
+      } else {
+        const prev = new Date(todayDate);
+        prev.setDate(prev.getDate() - 1);
+        if (prev.getFullYear() !== selectedYear) return 0;
+        anchor = prev;
+      }
+    } else {
+      anchor = new Date(selectedYear, 11, 31);
+    }
 
     if (!anchor) return 0;
 
@@ -226,7 +241,12 @@ const TaskHeatmap = ({ tasks = [] }) => {
     }
 
     return streak;
-  }, [countsByDate, selectedYear, currentYear]);
+  }, [countsByDate, selectedYear, currentYear, todayCount]);
+
+  const isStreakPending = useMemo(() => {
+    if (selectedYear !== currentYear) return false;
+    return todayCount === 0;
+  }, [selectedYear, currentYear, todayCount]);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 md:p-5">
@@ -243,7 +263,9 @@ const TaskHeatmap = ({ tasks = [] }) => {
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-500">
           <span>Total active days: {totalActiveDays}</span>
           <span>Max streak: {maxStreak}</span>
-          <span>Current streak: {currentStreak}</span>
+          <span className={isStreakPending ? 'text-slate-400' : 'text-slate-500'}>
+            Current streak: {currentStreak}
+          </span>
           <label htmlFor="heatmap-year" className="sr-only">
             Select year
           </label>
@@ -262,23 +284,17 @@ const TaskHeatmap = ({ tasks = [] }) => {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <div className="flex min-w-max flex-wrap gap-4 px-1 py-1 md:flex-nowrap md:gap-6">
+      <div className="overflow-x-hidden">
+        <div className="flex flex-col gap-6 px-1 py-1">
           {months.map((month) => (
-            <div key={month.key} className="shrink-0" style={{ width: `${monthGridWidth}px` }}>
+            <div
+              key={month.key}
+              className="mx-auto w-full max-w-full"
+              style={{ width: `${monthGridWidth}px` }}
+            >
               <p className="mb-2 text-xs font-semibold text-slate-500">{month.label}</p>
               <div
-                className="grid grid-cols-7 gap-[4px] text-[9px] font-medium text-slate-400"
-                aria-hidden="true"
-              >
-                {weekDayLabels.map((label, index) => (
-                  <span key={`${month.key}-wd-${label}-${index}`} className="text-center">
-                    {label}
-                  </span>
-                ))}
-              </div>
-              <div
-                className="mt-2 grid grid-cols-7 gap-[4px]"
+                className="grid grid-cols-7 gap-[4px]"
                 style={{ gridAutoRows: `${CELL_SIZE}px` }}
               >
                 {month.cells.map((cell) => {
@@ -298,7 +314,11 @@ const TaskHeatmap = ({ tasks = [] }) => {
                       className={[
                         'h-[14px] w-[14px] rounded-[3px]',
                         colorByCount(cell.count),
-                        cell.isToday ? 'ring-2 ring-blue-300 ring-offset-1 ring-offset-white' : ''
+                        cell.isToday
+                          ? cell.count > 0
+                            ? 'ring-2 ring-blue-300 ring-offset-1 ring-offset-white'
+                            : 'ring-2 ring-slate-300 ring-offset-1 ring-offset-white'
+                          : ''
                       ].join(' ')}
                       title={cell.tooltip}
                       aria-label={cell.tooltip}
