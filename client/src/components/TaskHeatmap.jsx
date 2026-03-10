@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
 const DAYS = 7;
-const CELL_SIZE = 14;
-const CELL_GAP = 4;
 
 const numberFormatter = new Intl.NumberFormat();
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -86,6 +84,23 @@ const TaskHeatmap = ({ tasks = [] }) => {
     }
   }, [availableYears, selectedYear, currentYear]);
 
+  const allCountsByDate = useMemo(() => {
+    const counts = new Map();
+
+    for (const task of safeTasks) {
+      if (!isCountedTask(task)) continue;
+
+      const date = normalizeDate(task.date);
+      if (!date) continue;
+
+      const key = toDateKey(date);
+      if (!key) continue;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+
+    return counts;
+  }, [safeTasks]);
+
   const countsByDate = useMemo(() => {
     const counts = new Map();
 
@@ -102,19 +117,9 @@ const TaskHeatmap = ({ tasks = [] }) => {
 
     return counts;
   }, [safeTasks, selectedYear]);
-  const monthGridWidth = useMemo(
-    () => DAYS * CELL_SIZE + (DAYS - 1) * CELL_GAP,
-    []
-  );
 
-  const todayKey = useMemo(() => {
-    if (selectedYear !== currentYear) return '';
-    return toDateKey(new Date());
-  }, [selectedYear, currentYear]);
-  const todayCount = useMemo(() => {
-    if (!todayKey) return 0;
-    return countsByDate.get(todayKey) || 0;
-  }, [countsByDate, todayKey]);
+  const todayKey = toDateKey(new Date());
+  const todayCount = allCountsByDate.get(todayKey) || 0;
 
   const months = useMemo(() => {
     const items = [];
@@ -160,7 +165,7 @@ const TaskHeatmap = ({ tasks = [] }) => {
           key,
           dayNumber,
           count,
-          isToday: key === todayKey,
+          isToday: key === todayKey && selectedYear === currentYear,
           tooltip: tooltipText
         });
       }
@@ -211,42 +216,29 @@ const TaskHeatmap = ({ tasks = [] }) => {
   }, [countsByDate]);
 
   const currentStreak = useMemo(() => {
-    let anchor = null;
+    const todayDate = normalizeDate(new Date());
+    if (!todayDate) return 0;
 
-    if (selectedYear === currentYear) {
-      const todayDate = normalizeDate(new Date());
-      if (!todayDate) return 0;
-      if (todayCount > 0) {
-        anchor = todayDate;
-      } else {
-        const prev = new Date(todayDate);
-        prev.setDate(prev.getDate() - 1);
-        if (prev.getFullYear() !== selectedYear) return 0;
-        anchor = prev;
-      }
-    } else {
-      anchor = new Date(selectedYear, 11, 31);
+    const anchor = new Date(todayDate);
+    if (todayCount === 0) {
+      anchor.setDate(anchor.getDate() - 1);
     }
-
-    if (!anchor) return 0;
 
     let streak = 0;
     const cursor = new Date(anchor);
 
-    while (cursor.getFullYear() === selectedYear) {
+    while (true) {
       const key = toDateKey(cursor);
-      if ((countsByDate.get(key) || 0) === 0) break;
+      if (!key) break;
+      if ((allCountsByDate.get(key) || 0) === 0) break;
       streak += 1;
       cursor.setDate(cursor.getDate() - 1);
     }
 
     return streak;
-  }, [countsByDate, selectedYear, currentYear, todayCount]);
+  }, [allCountsByDate, todayCount]);
 
-  const isStreakPending = useMemo(() => {
-    if (selectedYear !== currentYear) return false;
-    return todayCount === 0;
-  }, [selectedYear, currentYear, todayCount]);
+  const isStreakPending = useMemo(() => todayCount === 0, [todayCount]);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 md:p-5">
@@ -285,24 +277,22 @@ const TaskHeatmap = ({ tasks = [] }) => {
       </div>
 
       <div className="overflow-x-hidden">
-        <div className="flex flex-col gap-6 px-1 py-1">
+        <div className="grid gap-6 px-1 py-1 sm:grid-cols-2 xl:grid-cols-3">
           {months.map((month) => (
             <div
               key={month.key}
-              className="mx-auto w-full max-w-full"
-              style={{ width: `${monthGridWidth}px` }}
+              className="w-full"
             >
               <p className="mb-2 text-xs font-semibold text-slate-500">{month.label}</p>
               <div
-                className="grid grid-cols-7 gap-[4px]"
-                style={{ gridAutoRows: `${CELL_SIZE}px` }}
+                className="grid grid-cols-7 gap-1.5"
               >
                 {month.cells.map((cell) => {
                   if (cell.type === 'empty') {
                     return (
                       <span
                         key={cell.key}
-                        className="h-[14px] w-[14px] rounded-[3px] bg-transparent"
+                        className="aspect-square w-full rounded-[3px] bg-transparent"
                         aria-hidden="true"
                       />
                     );
@@ -312,7 +302,7 @@ const TaskHeatmap = ({ tasks = [] }) => {
                     <span
                       key={`${month.key}-${cell.key}`}
                       className={[
-                        'h-[14px] w-[14px] rounded-[3px]',
+                        'aspect-square w-full rounded-[3px]',
                         colorByCount(cell.count),
                         cell.isToday
                           ? cell.count > 0

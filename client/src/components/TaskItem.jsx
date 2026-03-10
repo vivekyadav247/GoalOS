@@ -1,5 +1,28 @@
 import { Check, Circle, Pencil, Trash2, CalendarDays } from 'lucide-react';
 
+const normalizeDate = (value) => {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return null;
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+
+  if (typeof value === 'string') {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim());
+    if (match) {
+      const year = Number(match[1]);
+      const month = Number(match[2]);
+      const day = Number(match[3]);
+      return new Date(year, month - 1, day);
+    }
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+};
+
 const TaskItem = ({
   task,
   busy = false,
@@ -8,20 +31,18 @@ const TaskItem = ({
   onDelete
 }) => {
   const completed = Boolean(task?.completed);
-  const taskDate = task?.date ? new Date(task.date) : null;
+  const taskDate = task?.date ? normalizeDate(task.date) : null;
   const lockActions = completed;
   let isToday = false;
   let isPast = false;
   let isFuture = false;
 
   if (taskDate && !Number.isNaN(taskDate.getTime())) {
-    const today = new Date();
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const today = normalizeDate(new Date());
 
-    if (taskDate < todayStart) {
+    if (today && taskDate < today) {
       isPast = true;
-    } else if (taskDate >= todayEnd) {
+    } else if (today && taskDate > today) {
       isFuture = true;
     } else {
       isToday = true;
