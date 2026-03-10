@@ -31,9 +31,29 @@ const computeProgress = (tasks = []) => {
   return Math.round((completed / tasks.length) * 100);
 };
 
+const normalizeDate = (value) => {
+  if (!value) return null;
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return null;
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+  if (typeof value === 'string') {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim());
+    if (match) {
+      const year = Number(match[1]);
+      const month = Number(match[2]);
+      const day = Number(match[3]);
+      return new Date(year, month - 1, day);
+    }
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+};
+
 const toDateKey = (value) => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  const date = normalizeDate(value);
+  if (!date) {
     return '';
   }
   const year = date.getFullYear();
@@ -118,7 +138,8 @@ const Dashboard = () => {
 
     return tasks
       .filter((task) => {
-        const date = new Date(task.date);
+        const date = normalizeDate(task.date);
+        if (!date) return false;
         return date >= start && date < end;
       })
       .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
@@ -158,7 +179,8 @@ const Dashboard = () => {
         label: day.slice(0, 3),
         value: tasks.filter((task) => {
           if (!task.completed || !task.date) return false;
-          const taskDate = new Date(task.date);
+          const taskDate = normalizeDate(task.date);
+          if (!taskDate) return false;
           const weekday = weekdays[taskDate.getDay() === 0 ? 6 : taskDate.getDay() - 1];
           return weekday === day;
         }).length
@@ -171,7 +193,8 @@ const Dashboard = () => {
 
     for (const task of tasks) {
       if (!task.date) continue;
-      const date = new Date(task.date);
+      const date = normalizeDate(task.date);
+      if (!date) continue;
       const year = date.getFullYear();
       const weekStart = new Date(year, date.getMonth(), date.getDate());
       const day = weekStart.getDay() || 7;

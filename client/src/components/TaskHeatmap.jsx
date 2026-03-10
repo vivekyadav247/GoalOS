@@ -23,7 +23,7 @@ const normalizeDate = (value) => {
   }
 
   if (typeof value === 'string') {
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim());
     if (match) {
       const year = Number(match[1]);
       const month = Number(match[2]);
