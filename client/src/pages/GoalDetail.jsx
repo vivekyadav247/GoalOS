@@ -137,39 +137,6 @@ const GoalDetail = () => {
     return `${year}-${month}-${day}`;
   }, []);
 
-  const deriveDefaultDateForWeek = useCallback(
-    (weekId) => {
-      const week = getWeekById(weekId);
-      const range = getWeekRange(week);
-      if (!range.start) {
-        return '';
-      }
-
-      const start = new Date(range.start);
-      if (Number.isNaN(start.getTime())) {
-        return '';
-      }
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      if (range.end) {
-        const end = new Date(range.end);
-        if (!Number.isNaN(end.getTime())) {
-          end.setHours(23, 59, 59, 999);
-          if (today.getTime() >= start.getTime() && today.getTime() <= end.getTime()) {
-            return formatLocalDate(today);
-          }
-        }
-      }
-
-      // Fallback: use the week's own start date (local date-only)
-      // to ensure the task is always created inside the selected week.
-      return formatLocalDate(start);
-    },
-    [getWeekById, getWeekRange, formatLocalDate]
-  );
-
   useEffect(() => {
     if (months.length === 0) {
       return;
@@ -397,20 +364,6 @@ const GoalDetail = () => {
     [goalId, formatLocalDate]
   );
 
-  const handleApplyWeeklyPattern = async (week, payload) => {
-    setBusyAction(`pattern-${week?._id || ''}`);
-    setActionError('');
-
-    try {
-      await applyPatternToWeek(week, payload);
-      await refresh();
-    } catch (err) {
-      setActionError(getApiErrorMessage(err, 'Unable to apply weekly pattern'));
-    } finally {
-      setBusyAction('');
-    }
-  };
-
   const handleQuickAddTask = async (payload) => {
     if (!goalId) {
       setActionError('Goal is missing');
@@ -546,11 +499,6 @@ const GoalDetail = () => {
     [editingTask, selectedDateForTask]
   );
 
-  const patternBusyId = useMemo(
-    () => (busyAction.startsWith('pattern-') ? busyAction.slice('pattern-'.length) : ''),
-    [busyAction]
-  );
-
   if (loading) {
     return <div className="surface-card p-6 text-sm text-slate-500">Loading goal details...</div>;
   }
@@ -653,15 +601,6 @@ const GoalDetail = () => {
           busyTaskId={busyTaskId}
           onToggleMonth={toggleMonth}
           onToggleWeek={toggleWeek}
-          onAddTask={(weekId) => {
-            setEditingTask(null);
-            if (weekId) {
-              setSelectedDateForTask(deriveDefaultDateForWeek(weekId));
-            } else {
-              setSelectedDateForTask('');
-            }
-            setTaskModalOpen(true);
-          }}
           onToggleTask={handleToggleTask}
           onEditTask={(task) => {
             setEditingTask(task);
@@ -671,8 +610,6 @@ const GoalDetail = () => {
             setTaskModalOpen(true);
           }}
           onDeleteTask={(taskId) => setDeleteTaskDialog({ open: true, taskId })}
-          onApplyPattern={handleApplyWeeklyPattern}
-          patternBusyId={patternBusyId}
           todayWeekId={todayWeekId}
           onWeekRef={registerWeekRef}
         />

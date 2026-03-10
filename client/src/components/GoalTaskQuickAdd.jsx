@@ -149,6 +149,13 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
   );
 
   const hasTimeline = monthOptions.length > 0 && weekOptions.length > 0;
+  const gridClassName = mode === 'GOAL' ? 'grid gap-4 md:grid-cols-1' : 'grid gap-4 md:grid-cols-2';
+  const modeHint =
+    mode === 'GOAL'
+      ? 'Add one task inside this goal timeline.'
+      : mode === 'MONTH'
+        ? 'Apply the weekly pattern across this month.'
+        : 'Apply the weekly pattern to a single week.';
 
   useEffect(() => {
     if (mode !== 'GOAL') {
@@ -204,7 +211,7 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
 
   const modeButtonClass = (active) =>
     [
-      'rounded-xl border px-3 py-2 text-xs font-semibold transition',
+      'w-full rounded-xl border px-3 py-2 text-xs font-semibold transition sm:w-auto',
       active
         ? 'border-blue-600 bg-blue-600 text-white'
         : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
@@ -314,14 +321,14 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
           </p>
         </div>
         {goal?.startDate && goal?.endDate ? (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-600 sm:w-auto sm:text-xs">
             Timeline: {formatLocalDate(goal.startDate)} to {formatLocalDate(goal.endDate)}
           </div>
         ) : null}
       </div>
 
       <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
           {MODE_OPTIONS.map((option) => (
             <button
               key={option.value}
@@ -336,64 +343,61 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
             </button>
           ))}
         </div>
+        <p className="text-xs text-slate-500">{modeHint}</p>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-3">
-            {mode === 'GOAL' ? (
-              <p className="text-xs text-slate-500">
-                Add one task inside this goal timeline.
-              </p>
-            ) : null}
+        <div className={gridClassName}>
+          {mode !== 'GOAL' ? (
+            <div className="space-y-3">
+              {mode === 'MONTH' ? (
+                <label className="text-xs font-semibold text-slate-600">
+                  Month ({monthOptions.length})
+                  <select
+                    className="input-base mt-1"
+                    value={monthId}
+                    onChange={(event) => setMonthId(event.target.value)}
+                    disabled={!hasTimeline}
+                  >
+                    {monthOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="mt-1 block text-[11px] text-slate-500">
+                    Weeks in this month: {weeksInSelectedMonth.length}
+                  </span>
+                </label>
+              ) : null}
 
-            {mode === 'MONTH' ? (
-              <label className="text-xs font-semibold text-slate-600">
-                Month ({monthOptions.length})
-                <select
-                  className="input-base mt-1"
-                  value={monthId}
-                  onChange={(event) => setMonthId(event.target.value)}
-                  disabled={!hasTimeline}
-                >
-                  {monthOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <span className="mt-1 block text-[11px] text-slate-500">
-                  Weeks in this month: {weeksInSelectedMonth.length}
-                </span>
-              </label>
-            ) : null}
+              {mode === 'WEEK' ? (
+                <label className="text-xs font-semibold text-slate-600">
+                  Week ({weekOptions.length})
+                  <select
+                    className="input-base mt-1"
+                    value={weekId}
+                    onChange={(event) => setWeekId(event.target.value)}
+                    disabled={!hasTimeline}
+                  >
+                    {weekOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
 
-            {mode === 'WEEK' ? (
-              <label className="text-xs font-semibold text-slate-600">
-                Week ({weekOptions.length})
-                <select
-                  className="input-base mt-1"
-                  value={weekId}
-                  onChange={(event) => setWeekId(event.target.value)}
-                  disabled={!hasTimeline}
-                >
-                  {weekOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-
-            {!hasTimeline && mode !== 'GOAL' ? (
-              <p className="text-xs text-amber-600">
-                Add a start and end date to this goal to unlock month/week planning.
-              </p>
-            ) : null}
-          </div>
+              {!hasTimeline && mode !== 'GOAL' ? (
+                <p className="text-xs text-amber-600">
+                  Add a start and end date to this goal to unlock month/week planning.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="space-y-3">
             {mode === 'GOAL' ? (
-              <>
+              <div className="grid gap-3 sm:grid-cols-2">
                 <label className="text-xs font-semibold text-slate-600">
                   Task title
                   <input
@@ -414,7 +418,7 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
                     max={maxGoalDate || undefined}
                   />
                 </label>
-              </>
+              </div>
             ) : (
               <>
                 <label className="text-xs font-semibold text-slate-600">
@@ -494,9 +498,9 @@ const GoalTaskQuickAdd = ({ goal, months, weeksByMonth, onCreateTask, onApplyPat
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           {formError ? <p className="text-xs text-rose-600">{formError}</p> : <span />}
-          <button type="submit" className="btn-primary" disabled={busy}>
+          <button type="submit" className="btn-primary w-full sm:w-auto" disabled={busy}>
             {busy ? 'Saving...' : actionLabel}
           </button>
         </div>

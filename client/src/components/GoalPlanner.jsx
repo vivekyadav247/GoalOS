@@ -19,12 +19,9 @@ const GoalPlanner = ({
   busyTaskId,
   onToggleMonth,
   onToggleWeek,
-  onAddTask,
   onToggleTask,
   onEditTask,
   onDeleteTask,
-  onApplyPattern,
-  patternBusyId,
   todayWeekId,
   onWeekRef
 }) => {
@@ -70,12 +67,9 @@ const GoalPlanner = ({
                         open={Boolean(openWeeks[week._id])}
                         busyTaskId={busyTaskId}
                         onToggleWeek={onToggleWeek}
-                        onAddTask={onAddTask}
                         onToggleTask={onToggleTask}
                         onEditTask={onEditTask}
                         onDeleteTask={onDeleteTask}
-                        onApplyPattern={onApplyPattern}
-                        patternBusy={patternBusyId === week._id}
                         highlightToday={todayWeekId === week._id}
                         containerRef={(node) => onWeekRef?.(week._id, node)}
                       />
