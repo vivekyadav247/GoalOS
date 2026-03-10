@@ -9,6 +9,17 @@ const toDateKey = (value) => {
   if (Number.isNaN(date.getTime())) return '';
   return date.toISOString().slice(0, 10);
 };
+const toDateKeyInTimeZone = (value, timeZone) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(date);
+};
 
 // POST /api/tasks
 const createTask = async (req, res) => {
@@ -206,8 +217,9 @@ const updateTask = async (req, res) => {
     }
     if (req.body.completed !== undefined) {
       if (req.body.completed && !task.completed) {
-        const todayKey = new Date().toISOString().split('T')[0];
-        const taskDateKey = new Date(task.date).toISOString().split('T')[0];
+        const timeZone = 'Asia/Kolkata';
+        const todayKey = toDateKeyInTimeZone(new Date(), timeZone);
+        const taskDateKey = toDateKeyInTimeZone(task.date, timeZone);
 
         if (taskDateKey > todayKey) {
           return res.status(400).json({ message: 'Future tasks cannot be completed' });
