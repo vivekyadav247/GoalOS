@@ -364,9 +364,13 @@ const Dashboard = () => {
 
       <TaskHeatmap tasks={tasks} />
 
-      <section className="grid gap-4 xl:grid-cols-2">
-        <GraphCard title="Today's Tasks" subtitle="Your plan for today">
-          <div className="space-y-3">
+      <section className="grid gap-4 lg:grid-cols-2">
+        <GraphCard
+          title="Today's Tasks"
+          subtitle="Your plan for today"
+          className="lg:max-h-[60vh] lg:overflow-hidden lg:flex lg:flex-col"
+        >
+          <div className="space-y-3 lg:flex-1 lg:overflow-y-auto lg:pr-2">
             {loading ? (
               <p className="text-sm text-slate-500">Loading tasks...</p>
             ) : todaysTasks.length === 0 ? (
