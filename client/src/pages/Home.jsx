@@ -1,4 +1,5 @@
-﻿import { useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/react';
 import GraphCard from '../components/GraphCard';
 import TaskItem from '../components/TaskItem';
@@ -11,6 +12,7 @@ import usePlannerData from '../hooks/usePlannerData';
 const Home = () => {
   const { user } = useUser();
   const { goals, tasks, loading, error, refresh } = usePlannerData();
+  const navigate = useNavigate();
 
   const [busyTaskId, setBusyTaskId] = useState('');
   const [modalError, setModalError] = useState('');
@@ -48,6 +50,13 @@ const Home = () => {
       })
       .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
   }, [tasks]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (todaysTasks.length === 0) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [loading, todaysTasks.length, navigate]);
 
   const handleToggleTask = async (task) => {
     setBusyTaskId(task._id);
@@ -225,3 +234,4 @@ const Home = () => {
 };
 
 export default Home;
+
