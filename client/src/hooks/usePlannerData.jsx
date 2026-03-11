@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { getApiErrorMessage, plannerApi } from '../services/api';
 
 const emptyState = {
@@ -19,20 +19,27 @@ const usePlannerDataState = () => {
   const [data, setData] = useState(emptyState);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const hasLoadedRef = useRef(false);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
+    const shouldShowLoader = !hasLoadedRef.current;
+    if (shouldShowLoader) {
+      setLoading(true);
+    }
     setError('');
 
     try {
       const next = await plannerApi.getAllHierarchy();
       setData({ ...emptyState, ...next });
+      hasLoadedRef.current = true;
       return next;
     } catch (err) {
       setError(getApiErrorMessage(err, 'Unable to load planner data'));
       throw err;
     } finally {
-      setLoading(false);
+      if (shouldShowLoader) {
+        setLoading(false);
+      }
     }
   }, []);
 

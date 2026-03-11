@@ -4,6 +4,7 @@ import CreateTaskModal from '../components/CreateTaskModal';
 import GoalTaskQuickAdd from '../components/GoalTaskQuickAdd';
 import GoalPlanner from '../components/GoalPlanner';
 import ConfirmDialog from '../components/ConfirmDialog';
+import DeleteTasksModal from '../components/DeleteTasksModal';
 import { getApiErrorMessage, goalApi, taskApi, weekApi } from '../services/api';
 import useGoalHierarchy from '../hooks/useGoalHierarchy';
 
@@ -33,6 +34,8 @@ const GoalDetail = () => {
   const [quickAddBusy, setQuickAddBusy] = useState(false);
   const [selectedDateForTask, setSelectedDateForTask] = useState('');
   const [deleteTaskDialog, setDeleteTaskDialog] = useState({ open: false, taskId: null });
+  const [deleteTasksModalOpen, setDeleteTasksModalOpen] = useState(false);
+  const [deleteTasksLoading, setDeleteTasksLoading] = useState(false);
   const [deleteGoalDialogOpen, setDeleteGoalDialogOpen] = useState(false);
 
   const weekRefs = useRef({});
@@ -208,6 +211,11 @@ const GoalDetail = () => {
     };
   }, [tasks]);
 
+  const deletableTasks = useMemo(
+    () => tasks.filter((task) => !task?.completed),
+    [tasks]
+  );
+
   const toggleMonth = (monthId) => {
     setOpenMonths((prev) => ({ ...prev, [monthId]: !prev[monthId] }));
   };
@@ -330,6 +338,25 @@ const GoalDetail = () => {
       setActionError(getApiErrorMessage(err, 'Unable to delete task'));
     } finally {
       setBusyTaskId('');
+    }
+  };
+
+  const handleDeleteTasks = async (taskIds) => {
+    if (!Array.isArray(taskIds) || taskIds.length === 0) {
+      return;
+    }
+
+    setDeleteTasksLoading(true);
+    setActionError('');
+
+    try {
+      await Promise.all(taskIds.map((taskId) => taskApi.remove(taskId)));
+      setDeleteTasksModalOpen(false);
+      await refresh();
+    } catch (err) {
+      setActionError(getApiErrorMessage(err, 'Unable to delete tasks'));
+    } finally {
+      setDeleteTasksLoading(false);
     }
   };
 
@@ -556,6 +583,13 @@ const GoalDetail = () => {
           </button>
           <button
             className="rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-60"
+            onClick={() => setDeleteTasksModalOpen(true)}
+            disabled={deletableTasks.length === 0}
+          >
+            Delete Tasks
+          </button>
+          <button
+            className="rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-60"
             onClick={() => setDeleteGoalDialogOpen(true)}
             disabled={busyAction === 'goal-delete'}
           >
@@ -645,6 +679,13 @@ const GoalDetail = () => {
           setSelectedDateForTask('');
         }}
         onSubmit={handleSaveTask}
+      />
+      <DeleteTasksModal
+        open={deleteTasksModalOpen}
+        tasks={tasks}
+        loading={deleteTasksLoading}
+        onClose={() => setDeleteTasksModalOpen(false)}
+        onConfirm={handleDeleteTasks}
       />
       <ConfirmDialog
         open={deleteTaskDialog.open}

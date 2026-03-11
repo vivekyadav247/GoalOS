@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getApiErrorMessage, plannerApi } from '../services/api';
 
 const emptyState = {
@@ -15,26 +15,34 @@ const useGoalHierarchy = (goalId) => {
   const [data, setData] = useState(emptyState);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const loadedGoalIdRef = useRef(null);
 
   const refresh = useCallback(async () => {
     if (!goalId) {
       setData(emptyState);
+      loadedGoalIdRef.current = null;
       setLoading(false);
       return emptyState;
     }
 
-    setLoading(true);
+    const shouldShowLoader = goalId !== loadedGoalIdRef.current;
+    if (shouldShowLoader) {
+      setLoading(true);
+    }
     setError('');
 
     try {
       const next = await plannerApi.getGoalHierarchy(goalId);
       setData({ ...emptyState, ...next });
+      loadedGoalIdRef.current = goalId;
       return next;
     } catch (err) {
       setError(getApiErrorMessage(err, 'Unable to load goal details'));
       throw err;
     } finally {
-      setLoading(false);
+      if (shouldShowLoader) {
+        setLoading(false);
+      }
     }
   }, [goalId]);
 
@@ -66,4 +74,5 @@ const useGoalHierarchy = (goalId) => {
 };
 
 export default useGoalHierarchy;
+
 
