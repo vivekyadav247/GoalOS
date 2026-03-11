@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/react';
 import GraphCard from '../components/GraphCard';
 import TaskItem from '../components/TaskItem';
@@ -13,6 +13,11 @@ const Home = () => {
   const { user } = useUser();
   const { goals, tasks, loading, error, refresh } = usePlannerData();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromAuth = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('fromAuth') === '1';
+  }, [location.search]);
 
   const [busyTaskId, setBusyTaskId] = useState('');
   const [modalError, setModalError] = useState('');
@@ -52,11 +57,13 @@ const Home = () => {
   }, [tasks]);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !fromAuth) return;
     if (todaysTasks.length === 0) {
       navigate('/dashboard', { replace: true });
+      return;
     }
-  }, [loading, todaysTasks.length, navigate]);
+    navigate('/', { replace: true });
+  }, [loading, fromAuth, todaysTasks.length, navigate]);
 
   const handleToggleTask = async (task) => {
     setBusyTaskId(task._id);
@@ -234,4 +241,5 @@ const Home = () => {
 };
 
 export default Home;
+
 

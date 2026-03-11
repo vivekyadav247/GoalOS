@@ -1,4 +1,4 @@
-import React, { StrictMode } from 'react';
+﻿import React, { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { ClerkProvider } from '@clerk/react';
@@ -12,8 +12,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ClerkProvider
       publishableKey={clerkPublishableKey}
       afterSignOutUrl="/"
-      signInFallbackRedirectUrl="/"
-      signUpFallbackRedirectUrl="/"
+      signInFallbackRedirectUrl="/?fromAuth=1"
+      signUpFallbackRedirectUrl="/?fromAuth=1"
       localization={{
         userButton: {
           action__manageAccount: 'Profile',
@@ -27,4 +27,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </ClerkProvider>
   </StrictMode>
 );
+
 
