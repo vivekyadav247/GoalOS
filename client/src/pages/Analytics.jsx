@@ -14,6 +14,16 @@ import ProgressCard from '../components/ProgressCard';
 import usePlannerData from '../hooks/usePlannerData';
 
 const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const tooltipStyle = {
+  backgroundColor: '#0f172a',
+  border: '1px solid #1e293b',
+  borderRadius: 12,
+  color: '#f8fafc',
+  fontSize: 12,
+  boxShadow: '0 12px 28px -18px rgba(15, 23, 42, 0.6)'
+};
+const tooltipLabelStyle = { color: '#e2e8f0', fontWeight: 600 };
+const tooltipItemStyle = { color: '#f8fafc' };
 
 const startOfWeek = (date) => {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -286,11 +296,9 @@ const Analytics = () => {
                 />
                 <Tooltip
                   cursor={{ fill: 'rgba(15, 23, 42, 0.05)' }}
-                  contentStyle={{
-                    borderRadius: 12,
-                    borderColor: '#e2e8f0',
-                    fontSize: 12
-                  }}
+                  contentStyle={tooltipStyle}
+                  labelStyle={tooltipLabelStyle}
+                  itemStyle={tooltipItemStyle}
                   formatter={(value) => [`${value}`, 'Tasks']}
                 />
                 <Bar dataKey="value" fill="url(#dailyBarGradient)" radius={[10, 10, 6, 6]} barSize={34} />
@@ -322,11 +330,9 @@ const Analytics = () => {
                   />
                   <Tooltip
                     cursor={{ stroke: '#e2e8f0', strokeDasharray: '4 4' }}
-                    contentStyle={{
-                      borderRadius: 12,
-                      borderColor: '#e2e8f0',
-                      fontSize: 12
-                    }}
+                    contentStyle={tooltipStyle}
+                    labelStyle={tooltipLabelStyle}
+                    itemStyle={tooltipItemStyle}
                     formatter={(value) => [`${value}%`, 'Completion']}
                   />
                   <Line
@@ -380,11 +386,9 @@ const Analytics = () => {
                     }
                   />
                   <Tooltip
-                    contentStyle={{
-                      borderRadius: 12,
-                      borderColor: '#e2e8f0',
-                      fontSize: 12
-                    }}
+                    contentStyle={tooltipStyle}
+                    labelStyle={tooltipLabelStyle}
+                    itemStyle={tooltipItemStyle}
                     formatter={(value) => [`${value}%`, 'Completion']}
                   />
                   <Bar dataKey="value" fill="url(#goalBarGradient)" radius={[8, 8, 8, 8]} barSize={18} />
