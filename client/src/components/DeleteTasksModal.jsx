@@ -27,6 +27,7 @@ const DeleteTasksModal = ({
   onConfirm
 }) => {
   const [selectedIds, setSelectedIds] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState('');
 
   const deletableTasks = useMemo(
     () => tasks.filter((task) => !task?.completed),
@@ -68,6 +69,22 @@ const DeleteTasksModal = ({
     return Array.from(groups.values());
   }, [deletableTasks]);
 
+  const monthOptions = useMemo(
+    () =>
+      groupedTasks.map((group) => ({
+        value: group.key,
+        label: group.label
+      })),
+    [groupedTasks]
+  );
+
+  const visibleGroups = useMemo(() => {
+    if (!selectedMonth) {
+      return groupedTasks;
+    }
+    return groupedTasks.filter((group) => group.key === selectedMonth);
+  }, [groupedTasks, selectedMonth]);
+
   const selectedCount = selectedIds.length;
   const totalCount = deletableTasks.length;
   const blockedCount = Math.max(0, tasks.length - deletableTasks.length);
@@ -77,6 +94,7 @@ const DeleteTasksModal = ({
       return;
     }
     setSelectedIds([]);
+    setSelectedMonth('');
   }, [open, tasks.length]);
 
   if (!open) {
@@ -87,6 +105,32 @@ const DeleteTasksModal = ({
     setSelectedIds((prev) =>
       prev.includes(taskId) ? prev.filter((id) => id !== taskId) : [...prev, taskId]
     );
+  };
+
+  const handleMonthChange = (event) => {
+    const value = event.target.value;
+    setSelectedMonth(value);
+
+    if (!value) {
+      setSelectedIds([]);
+      return;
+    }
+
+    const monthTaskIds = deletableTasks
+      .filter((task) => {
+        if (!task?.date) {
+          return value === 'no-date';
+        }
+        const date = new Date(task.date);
+        if (Number.isNaN(date.getTime())) {
+          return value === 'no-date';
+        }
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        return key === value;
+      })
+      .map((task) => task._id);
+
+    setSelectedIds(monthTaskIds);
   };
 
   const handleSelectAll = () => {
@@ -124,6 +168,26 @@ const DeleteTasksModal = ({
           </div>
         ) : (
           <div className="space-y-3">
+            <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600">Select month</label>
+                <select
+                  className="input-base"
+                  value={selectedMonth}
+                  onChange={handleMonthChange}
+                >
+                  <option value="">Choose a month</option>
+                  {monthOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="text-xs text-slate-500">
+                {selectedMonth ? 'Month selected' : 'Select a month to auto-pick tasks'}
+              </div>
+            </div>
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
               <span>
                 {selectedCount} selected of {totalCount}
@@ -139,7 +203,7 @@ const DeleteTasksModal = ({
             </div>
 
             <div className="max-h-[420px] space-y-4 overflow-y-auto pr-1">
-              {groupedTasks.map((group) => (
+              {visibleGroups.map((group) => (
                 <div key={group.key} className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     {group.label}
