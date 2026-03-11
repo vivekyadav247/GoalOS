@@ -28,6 +28,7 @@ const DeleteTasksModal = ({
 }) => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedTitle, setSelectedTitle] = useState('');
 
   const deletableTasks = useMemo(
     () => tasks.filter((task) => !task?.completed),
@@ -78,6 +79,41 @@ const DeleteTasksModal = ({
     [groupedTasks]
   );
 
+  const tasksInSelectedMonth = useMemo(() => {
+    if (!selectedMonth) {
+      return [];
+    }
+
+    return deletableTasks.filter((task) => {
+      if (!task?.date) {
+        return selectedMonth === 'no-date';
+      }
+      const date = new Date(task.date);
+      if (Number.isNaN(date.getTime())) {
+        return selectedMonth === 'no-date';
+      }
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      return key === selectedMonth;
+    });
+  }, [deletableTasks, selectedMonth]);
+
+  const titleOptions = useMemo(() => {
+    if (tasksInSelectedMonth.length === 0) {
+      return [];
+    }
+
+    const map = new Map();
+    for (const task of tasksInSelectedMonth) {
+      const titleKey = (task?.title || '').trim() || 'Untitled task';
+      map.set(titleKey, (map.get(titleKey) || 0) + 1);
+    }
+
+    return Array.from(map.entries()).map(([title, count]) => ({
+      value: title,
+      label: `${title} (${count})`
+    }));
+  }, [tasksInSelectedMonth]);
+
   const visibleGroups = useMemo(() => {
     if (!selectedMonth) {
       return groupedTasks;
@@ -95,6 +131,7 @@ const DeleteTasksModal = ({
     }
     setSelectedIds([]);
     setSelectedMonth('');
+    setSelectedTitle('');
   }, [open, tasks.length]);
 
   if (!open) {
@@ -110,30 +147,52 @@ const DeleteTasksModal = ({
   const handleMonthChange = (event) => {
     const value = event.target.value;
     setSelectedMonth(value);
+    setSelectedTitle('');
 
     if (!value) {
       setSelectedIds([]);
       return;
     }
 
-    const monthTaskIds = deletableTasks
+    setSelectedIds([]);
+  };
+
+  const handleTitleChange = (event) => {
+    const value = event.target.value;
+    setSelectedTitle(value);
+
+    if (!value) {
+      setSelectedIds([]);
+      return;
+    }
+
+    const titleIds = tasksInSelectedMonth
       .filter((task) => {
-        if (!task?.date) {
-          return value === 'no-date';
-        }
-        const date = new Date(task.date);
-        if (Number.isNaN(date.getTime())) {
-          return value === 'no-date';
-        }
-        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        return key === value;
+        const titleKey = (task?.title || '').trim() || 'Untitled task';
+        return titleKey === value;
       })
       .map((task) => task._id);
 
-    setSelectedIds(monthTaskIds);
+    setSelectedIds(titleIds);
   };
 
   const handleSelectAll = () => {
+    if (selectedTitle) {
+      const titleIds = tasksInSelectedMonth
+        .filter((task) => {
+          const titleKey = (task?.title || '').trim() || 'Untitled task';
+          return titleKey === selectedTitle;
+        })
+        .map((task) => task._id);
+      setSelectedIds(titleIds);
+      return;
+    }
+
+    if (selectedMonth) {
+      setSelectedIds(tasksInSelectedMonth.map((task) => task._id));
+      return;
+    }
+
     setSelectedIds(deletableTasks.map((task) => task._id));
   };
 
@@ -144,16 +203,16 @@ const DeleteTasksModal = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
       <div className="surface-card w-full max-w-2xl p-5 sm:p-6">
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">Delete tasks</h3>
-            <p className="mt-1 text-sm text-slate-500">
-              Select tasks to delete. They will be removed from their month and week automatically.
-            </p>
-          </div>
-          <button type="button" onClick={onClose} className="btn-secondary px-2.5 py-1.5 text-xs">
-            Close
-          </button>
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Delete tasks</h3>
+              <p className="mt-1 text-sm text-slate-500">
+              Select a month, then choose the task title to remove from that month.
+              </p>
+            </div>
+            <button type="button" onClick={onClose} className="btn-secondary px-2.5 py-1.5 text-xs">
+              Close
+            </button>
         </div>
 
         {blockedCount > 0 ? (
@@ -168,7 +227,7 @@ const DeleteTasksModal = ({
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+            <div className="grid gap-3 sm:grid-cols-[1fr_1fr] sm:items-end">
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">Select month</label>
                 <select
@@ -184,8 +243,23 @@ const DeleteTasksModal = ({
                   ))}
                 </select>
               </div>
-              <div className="text-xs text-slate-500">
-                {selectedMonth ? 'Month selected' : 'Select a month to auto-pick tasks'}
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600">Select task</label>
+                <select
+                  className="input-base"
+                  value={selectedTitle}
+                  onChange={handleTitleChange}
+                  disabled={!selectedMonth || titleOptions.length === 0}
+                >
+                  <option value="">
+                    {selectedMonth ? 'Choose a task' : 'Select a month first'}
+                  </option>
+                  {titleOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
