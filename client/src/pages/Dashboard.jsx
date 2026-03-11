@@ -382,9 +382,9 @@ const Dashboard = () => {
         <GraphCard
           title="Today's Tasks"
           subtitle="Your plan for today"
-          className="lg:max-h-[60vh] lg:overflow-hidden lg:flex lg:flex-col"
+          className="flex max-h-[360px] flex-col overflow-hidden sm:max-h-[420px] lg:max-h-[60vh]"
         >
-          <div className="space-y-3 lg:flex-1 lg:overflow-y-auto lg:pr-2">
+          <div className="flex-1 space-y-3 overflow-y-auto pr-2">
             {loading ? (
               <p className="text-sm text-slate-500">Loading tasks...</p>
             ) : todaysTasks.length === 0 ? (
