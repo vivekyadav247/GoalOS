@@ -3,6 +3,20 @@ import TaskCard from './TaskCard';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+const orderByCompletion = (items = []) => {
+  if (!items.length) return items;
+  const remaining = [];
+  const done = [];
+  for (const item of items) {
+    if (item.completed) {
+      done.push(item);
+    } else {
+      remaining.push(item);
+    }
+  }
+  return [...remaining, ...done];
+};
+
 const WeekPlanner = ({
   week,
   tasks = [],
@@ -81,7 +95,7 @@ const WeekPlanner = ({
           ) : (
             <div className="max-h-96 space-y-3 overflow-y-auto pr-1">
               {DAYS.map((day) => {
-                const dayTasks = groupedByDay[day] || [];
+                const dayTasks = orderByCompletion(groupedByDay[day] || []);
                 if (dayTasks.length === 0) {
                   return null;
                 }

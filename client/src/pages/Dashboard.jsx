@@ -39,6 +39,20 @@ const computeProgress = (tasks = []) => {
   return Math.round((completed / tasks.length) * 100);
 };
 
+const orderByCompletion = (items = []) => {
+  if (!items.length) return items;
+  const remaining = [];
+  const done = [];
+  for (const item of items) {
+    if (item.completed) {
+      done.push(item);
+    } else {
+      remaining.push(item);
+    }
+  }
+  return [...remaining, ...done];
+};
+
 const normalizeDate = (value) => {
   if (!value) return null;
   if (value instanceof Date) {
@@ -132,13 +146,13 @@ const Dashboard = () => {
     const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
-    return tasks
-      .filter((task) => {
+    const filtered = tasks.filter((task) => {
         const date = normalizeDate(task.date);
         if (!date) return false;
         return date >= start && date < end;
-      })
-      .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+      });
+    const sorted = filtered.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+    return orderByCompletion(sorted);
   }, [tasks]);
 
   const activeStreak = useMemo(() => {

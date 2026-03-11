@@ -6,6 +6,20 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { getApiErrorMessage, taskApi } from '../services/api';
 import usePlannerData from '../hooks/usePlannerData';
 
+const orderByCompletion = (items = []) => {
+  if (!items.length) return items;
+  const remaining = [];
+  const done = [];
+  for (const item of items) {
+    if (item.completed) {
+      done.push(item);
+    } else {
+      remaining.push(item);
+    }
+  }
+  return [...remaining, ...done];
+};
+
 const Tasks = () => {
   const { goals, tasks, loading, error, refresh } = usePlannerData();
 
@@ -64,9 +78,9 @@ const Tasks = () => {
     }
 
     return {
-      today,
-      thisWeek,
-      thisMonth
+      today: orderByCompletion(today),
+      thisWeek: orderByCompletion(thisWeek),
+      thisMonth: orderByCompletion(thisMonth)
     };
   }, [tasks]);
 
