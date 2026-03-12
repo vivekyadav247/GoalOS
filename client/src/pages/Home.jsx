@@ -190,7 +190,7 @@ const Home = () => {
       {modalError ? <div className="surface-card p-4 text-sm text-rose-700">{modalError}</div> : null}
 
       <GraphCard title="Today&apos;s Tasks" subtitle="Your plan for today">
-        <div className="space-y-3">
+        <div className="space-y-2 md:space-y-3">
           {loading ? (
             <p className="text-sm text-slate-500">Loading tasks...</p>
           ) : todaysTasks.length === 0 ? (

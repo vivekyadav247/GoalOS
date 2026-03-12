@@ -185,7 +185,7 @@ const Tasks = () => {
               subtitle={`${section.items.filter((task) => task.completed).length}/${section.items.length} completed`}
               className="h-full"
             >
-              <div className="max-h-[360px] space-y-2 overflow-y-auto pr-1 md:max-h-[420px]">
+              <div className="max-h-[360px] space-y-2 overflow-y-auto pr-0 md:max-h-[420px] md:pr-1">
                 {section.items.length === 0 ? (
                   <p className="text-sm text-slate-500">No tasks in this bucket.</p>
                 ) : (

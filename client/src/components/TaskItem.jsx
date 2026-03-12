@@ -58,14 +58,14 @@ const TaskItem = ({
     : 'No date';
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-slate-300 hover:shadow-md md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-none transition hover:border-slate-300 md:flex-row md:items-center md:justify-between md:gap-3 md:rounded-xl md:p-3 md:shadow-sm md:hover:shadow-md">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
           onClick={onToggle}
           disabled={busy || isPast || isFuture}
           className={[
-            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs transition',
+            'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs transition md:h-8 md:w-8',
             completed
               ? 'border-emerald-500 bg-emerald-500 text-white'
               : 'border-slate-300 bg-white text-slate-300 hover:border-slate-400 hover:text-slate-400',
@@ -84,7 +84,7 @@ const TaskItem = ({
           >
             {task?.title}
           </p>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 md:mt-1">
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5">
               <CalendarDays className="h-3 w-3" aria-hidden="true" />
               {dateLabel}
@@ -98,7 +98,7 @@ const TaskItem = ({
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2 self-end md:self-auto">
+      <div className="flex shrink-0 items-center gap-2 self-start md:self-auto">
         {onEdit ? (
           <button
             type="button"
@@ -106,7 +106,7 @@ const TaskItem = ({
             disabled={busy || lockActions}
             title={lockActions ? 'Completed tasks cannot be edited.' : 'Edit task'}
             className={[
-              'inline-flex min-h-9 items-center gap-1 rounded-lg px-3 py-2 text-xs font-medium transition',
+              'inline-flex min-h-8 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition md:min-h-9 md:px-3 md:py-2',
               lockActions
                 ? 'text-slate-400'
                 : 'text-slate-600 hover:bg-slate-100',
@@ -124,7 +124,7 @@ const TaskItem = ({
             disabled={busy || lockActions}
             title={lockActions ? 'Completed tasks cannot be deleted.' : 'Delete task'}
             className={[
-              'inline-flex min-h-9 items-center gap-1 rounded-lg px-3 py-2 text-xs font-medium transition',
+              'inline-flex min-h-8 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition md:min-h-9 md:px-3 md:py-2',
               lockActions
                 ? 'text-slate-400'
                 : 'text-rose-600 hover:bg-rose-50',
