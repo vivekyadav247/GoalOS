@@ -58,8 +58,8 @@ const TaskItem = ({
     : 'No date';
 
   return (
-    <div className="flex flex-col gap-1.5 rounded-lg border border-slate-200 bg-white p-2.5 shadow-none transition hover:border-slate-300 md:flex-row md:items-center md:justify-between md:gap-3 md:rounded-xl md:p-3 md:shadow-sm md:hover:shadow-md">
-      <div className="flex min-w-0 items-center gap-3">
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-2.5 shadow-none transition hover:border-slate-300 md:gap-3 md:rounded-xl md:p-3 md:shadow-sm md:hover:shadow-md">
+      <div className="flex min-w-0 flex-1 items-start gap-3">
         <button
           type="button"
           onClick={onToggle}
@@ -98,7 +98,7 @@ const TaskItem = ({
         </div>
       </div>
 
-      <div className="flex w-full shrink-0 items-center justify-end gap-2 md:w-auto md:justify-start md:self-auto">
+      <div className="flex shrink-0 items-center gap-2">
         {onEdit ? (
           <button
             type="button"
