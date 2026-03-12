@@ -58,7 +58,7 @@ const TaskItem = ({
     : 'No date';
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-none transition hover:border-slate-300 md:flex-row md:items-center md:justify-between md:gap-3 md:rounded-xl md:p-3 md:shadow-sm md:hover:shadow-md">
+    <div className="flex flex-col gap-1.5 rounded-lg border border-slate-200 bg-white p-2.5 shadow-none transition hover:border-slate-300 md:flex-row md:items-center md:justify-between md:gap-3 md:rounded-xl md:p-3 md:shadow-sm md:hover:shadow-md">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
@@ -98,15 +98,16 @@ const TaskItem = ({
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2 self-start md:self-auto">
+      <div className="flex w-full shrink-0 items-center justify-end gap-2 md:w-auto md:justify-start md:self-auto">
         {onEdit ? (
           <button
             type="button"
             onClick={onEdit}
             disabled={busy || lockActions}
             title={lockActions ? 'Completed tasks cannot be edited.' : 'Edit task'}
+            aria-label="Edit task"
             className={[
-              'inline-flex min-h-8 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition md:min-h-9 md:px-3 md:py-2',
+              'inline-flex min-h-8 items-center justify-center gap-1 rounded-lg p-2 text-xs font-medium transition md:min-h-9 md:px-3 md:py-2',
               lockActions
                 ? 'text-slate-400'
                 : 'text-slate-600 hover:bg-slate-100',
@@ -114,7 +115,7 @@ const TaskItem = ({
             ].join(' ')}
           >
             <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-            Edit
+            <span className="hidden md:inline">Edit</span>
           </button>
         ) : null}
         {onDelete ? (
@@ -123,8 +124,9 @@ const TaskItem = ({
             onClick={onDelete}
             disabled={busy || lockActions}
             title={lockActions ? 'Completed tasks cannot be deleted.' : 'Delete task'}
+            aria-label="Delete task"
             className={[
-              'inline-flex min-h-8 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition md:min-h-9 md:px-3 md:py-2',
+              'inline-flex min-h-8 items-center justify-center gap-1 rounded-lg p-2 text-xs font-medium transition md:min-h-9 md:px-3 md:py-2',
               lockActions
                 ? 'text-slate-400'
                 : 'text-rose-600 hover:bg-rose-50',
@@ -132,7 +134,7 @@ const TaskItem = ({
             ].join(' ')}
           >
             <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-            Delete
+            <span className="hidden md:inline">Delete</span>
           </button>
         ) : null}
       </div>

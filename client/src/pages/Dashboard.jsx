@@ -384,7 +384,7 @@ const Dashboard = () => {
           subtitle="Your plan for today"
           className="flex max-h-[360px] flex-col overflow-hidden sm:max-h-[420px] lg:max-h-[60vh]"
         >
-          <div className="flex-1 space-y-2 overflow-y-auto pr-0 md:space-y-3 md:pr-2">
+          <div className="flex-1 space-y-2 overflow-y-auto pr-2 md:space-y-3 md:pr-2">
             {loading ? (
               <p className="text-sm text-slate-500">Loading tasks...</p>
             ) : todaysTasks.length === 0 ? (
