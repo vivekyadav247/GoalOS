@@ -6,12 +6,45 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { getApiErrorMessage, taskApi } from '../services/api';
 import usePlannerData from '../hooks/usePlannerData';
 
-const orderByCompletion = (items = []) => {
+const normalizeDate = (value) => {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return null;
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+
+  if (typeof value === 'string') {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim());
+    if (match) {
+      const year = Number(match[1]);
+      const month = Number(match[2]);
+      const day = Number(match[3]);
+      return new Date(year, month - 1, day);
+    }
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+};
+
+const isMissedTask = (task, today) => {
+  if (!task?.date || task?.completed || !today) return false;
+  const taskDate = normalizeDate(task.date);
+  if (!taskDate) return false;
+  return taskDate < today;
+};
+
+const orderByCompletion = (items = [], today = null) => {
   if (!items.length) return items;
   const remaining = [];
   const done = [];
+  const todayDate = today ? normalizeDate(today) : normalizeDate(new Date());
+
   for (const item of items) {
-    if (item.completed) {
+    const missed = isMissedTask(item, todayDate);
+    if (item.completed || missed) {
       done.push(item);
     } else {
       remaining.push(item);
@@ -78,9 +111,9 @@ const Tasks = () => {
     }
 
     return {
-      today: orderByCompletion(today),
-      thisWeek: orderByCompletion(thisWeek),
-      thisMonth: orderByCompletion(thisMonth)
+      today: orderByCompletion(today, todayStart),
+      thisWeek: orderByCompletion(thisWeek, todayStart),
+      thisMonth: orderByCompletion(thisMonth, todayStart)
     };
   }, [tasks]);
 
@@ -143,11 +176,29 @@ const Tasks = () => {
     }
   };
 
-  const sections = [
-    { key: 'today', title: 'Today', items: grouped.today },
-    { key: 'week', title: 'This Week', items: grouped.thisWeek },
-    { key: 'month', title: 'This Month', items: grouped.thisMonth }
-  ];
+  const sections = useMemo(
+    () => [
+      {
+        key: 'today',
+        title: 'Today',
+        items: grouped.today,
+        completedCount: grouped.today.reduce((sum, task) => sum + (task.completed ? 1 : 0), 0)
+      },
+      {
+        key: 'week',
+        title: 'This Week',
+        items: grouped.thisWeek,
+        completedCount: grouped.thisWeek.reduce((sum, task) => sum + (task.completed ? 1 : 0), 0)
+      },
+      {
+        key: 'month',
+        title: 'This Month',
+        items: grouped.thisMonth,
+        completedCount: grouped.thisMonth.reduce((sum, task) => sum + (task.completed ? 1 : 0), 0)
+      }
+    ],
+    [grouped]
+  );
 
   return (
     <div className="space-y-6">
@@ -182,7 +233,7 @@ const Tasks = () => {
             <GraphCard
               key={section.key}
               title={section.title}
-              subtitle={`${section.items.filter((task) => task.completed).length}/${section.items.length} completed`}
+              subtitle={`${section.completedCount}/${section.items.length} completed`}
               className="h-full"
             >
               <div className="max-h-[360px] space-y-2 overflow-y-auto pr-2 md:max-h-[420px] md:pr-1">

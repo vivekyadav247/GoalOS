@@ -1,4 +1,10 @@
+import { memo } from 'react';
 import { Check, Circle, Pencil, Trash2, CalendarDays } from 'lucide-react';
+
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  day: 'numeric'
+});
 
 const normalizeDate = (value) => {
   if (!value) return null;
@@ -32,7 +38,6 @@ const TaskItem = ({
 }) => {
   const completed = Boolean(task?.completed);
   const taskDate = task?.date ? normalizeDate(task.date) : null;
-  const lockActions = completed;
   let isToday = false;
   let isPast = false;
   let isFuture = false;
@@ -50,12 +55,8 @@ const TaskItem = ({
   }
 
   const isMissed = isPast && !completed;
-  const dateLabel = task?.date
-    ? new Date(task.date).toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric'
-      })
-    : 'No date';
+  const lockActions = completed || isMissed;
+  const dateLabel = taskDate ? dateFormatter.format(taskDate) : 'No date';
 
   return (
     <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-2.5 shadow-none transition hover:border-slate-300 md:gap-3 md:rounded-xl md:p-3 md:shadow-sm md:hover:shadow-md">
@@ -104,7 +105,7 @@ const TaskItem = ({
             type="button"
             onClick={onEdit}
             disabled={busy || lockActions}
-            title={lockActions ? 'Completed tasks cannot be edited.' : 'Edit task'}
+            title={lockActions ? 'Completed or missed tasks cannot be edited.' : 'Edit task'}
             aria-label="Edit task"
             className={[
               'inline-flex min-h-8 items-center justify-center gap-1 rounded-lg p-2 text-xs font-medium transition md:min-h-9 md:px-3 md:py-2',
@@ -123,7 +124,7 @@ const TaskItem = ({
             type="button"
             onClick={onDelete}
             disabled={busy || lockActions}
-            title={lockActions ? 'Completed tasks cannot be deleted.' : 'Delete task'}
+            title={lockActions ? 'Completed or missed tasks cannot be deleted.' : 'Delete task'}
             aria-label="Delete task"
             className={[
               'inline-flex min-h-8 items-center justify-center gap-1 rounded-lg p-2 text-xs font-medium transition md:min-h-9 md:px-3 md:py-2',
@@ -142,4 +143,4 @@ const TaskItem = ({
   );
 };
 
-export default TaskItem;
+export default memo(TaskItem);

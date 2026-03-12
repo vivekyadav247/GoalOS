@@ -24,6 +24,37 @@ const tooltipStyle = {
 };
 const tooltipLabelStyle = { color: '#e2e8f0', fontWeight: 600 };
 const tooltipItemStyle = { color: '#f8fafc' };
+const shortDateFormatter = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
+const weekdayFormatter = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
+
+const normalizeDate = (value) => {
+  if (!value) return null;
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return null;
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+  if (typeof value === 'string') {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim());
+    if (match) {
+      const year = Number(match[1]);
+      const month = Number(match[2]);
+      const day = Number(match[3]);
+      return new Date(year, month - 1, day);
+    }
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+};
+
+const toDateKey = (value) => {
+  const date = normalizeDate(value);
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const startOfWeek = (date) => {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -93,32 +124,52 @@ const Analytics = () => {
   );
   const maxDaily = useMemo(() => Math.max(1, ...dailyData.map((item) => item.value)), [dailyData]);
 
-  const weeklyData = useMemo(() => {
-    const buckets = new Map();
+  const tasksByDate = useMemo(() => {
+    const map = new Map();
+    for (const task of filteredTasks) {
+      const key = toDateKey(task?.date);
+      if (!key) continue;
+      const current = map.get(key) || { total: 0, completed: 0 };
+      current.total += 1;
+      if (task.completed) {
+        current.completed += 1;
+      }
+      map.set(key, current);
+    }
+    return map;
+  }, [filteredTasks]);
+
+  const weeklyProgressData = useMemo(() => {
+    const today = normalizeDate(todayStart);
+    if (!today) return [];
+    const items = [];
+    for (let offset = 6; offset >= 0; offset -= 1) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - offset);
+      const key = toDateKey(date);
+      const stats = tasksByDate.get(key) || { total: 0, completed: 0 };
+      const value = stats.total ? Math.round((stats.completed / stats.total) * 100) : 0;
+      items.push({
+        label: weekdayFormatter.format(date),
+        value,
+        total: stats.total,
+        completed: stats.completed,
+        dateLabel: shortDateFormatter.format(date)
+      });
+    }
+    return items;
+  }, [tasksByDate, todayStart]);
+
+  const weekCount = useMemo(() => {
+    const keys = new Set();
     for (const task of filteredTasks) {
       if (!task.date) continue;
-      const d = new Date(task.date);
-      if (Number.isNaN(d.getTime())) continue;
-      if (d > todayStart) continue;
-      const key = startOfWeek(d).toISOString().slice(0, 10);
-      if (!buckets.has(key)) {
-        buckets.set(key, []);
-      }
-      buckets.get(key).push(task);
+      const date = normalizeDate(task.date);
+      if (!date) continue;
+      keys.add(startOfWeek(date).toISOString().slice(0, 10));
     }
-
-    return Array.from(buckets.entries())
-      .sort((a, b) => new Date(a[0]) - new Date(b[0]))
-      .slice(-10)
-      .map(([key, weekTasks]) => {
-        const completed = weekTasks.filter((task) => task.completed).length;
-        const progress = weekTasks.length ? Math.round((completed / weekTasks.length) * 100) : 0;
-        return {
-          label: `W ${key.slice(5)}`,
-          value: progress
-        };
-      });
-  }, [filteredTasks, todayStart]);
+    return keys.size;
+  }, [filteredTasks]);
 
   const goalMap = useMemo(
     () =>
@@ -262,7 +313,7 @@ const Analytics = () => {
           tone="blue"
         />
         <ProgressCard title="Months Planned" value={monthCount} subtitle="Months touched by plans" tone="slate" />
-        <ProgressCard title="Task Weeks" value={weeklyData.length} subtitle="Active execution weeks" tone="amber" />
+        <ProgressCard title="Task Weeks" value={weekCount} subtitle="Active execution weeks" tone="amber" />
         <ProgressCard title="Completion" value={`${completionSummary}%`} subtitle="Overall completed tasks" tone="emerald" />
       </section>
 
@@ -306,12 +357,12 @@ const Analytics = () => {
             </ResponsiveContainer>
           </GraphCard>
 
-          <GraphCard title="Weekly progress" subtitle="Completion percentage" className="h-[340px]">
-            {weeklyData.length === 0 ? (
+          <GraphCard title="Weekly progress" subtitle="Daily completion % (last 7 days)" className="h-[340px]">
+            {weeklyProgressData.length === 0 ? (
               <p className="text-sm text-slate-500">No progress yet for this range.</p>
             ) : (
               <ResponsiveContainer width="100%" height="88%">
-                <LineChart data={weeklyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                <LineChart data={weeklyProgressData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                   <XAxis
                     dataKey="label"
                     axisLine={{ stroke: '#e2e8f0' }}
@@ -333,7 +384,16 @@ const Analytics = () => {
                     contentStyle={tooltipStyle}
                     labelStyle={tooltipLabelStyle}
                     itemStyle={tooltipItemStyle}
-                    formatter={(value) => [`${value}%`, 'Completion']}
+                    labelFormatter={(label, payload) =>
+                      payload?.[0]?.payload?.dateLabel ? payload[0].payload.dateLabel : label
+                    }
+                    formatter={(value, _name, props) => {
+                      const meta = props?.payload;
+                      if (!meta?.total) {
+                        return [`${value}%`, 'No tasks'];
+                      }
+                      return [`${value}%`, `${meta.completed}/${meta.total} tasks`];
+                    }}
                   />
                   <Line
                     type="monotone"
