@@ -78,7 +78,7 @@ const TaskItem = ({
         <div className="min-w-0">
           <p
             className={[
-              'truncate text-sm font-medium',
+              'text-sm font-medium leading-snug break-words md:truncate md:whitespace-nowrap',
               completed ? 'text-slate-400 line-through' : 'text-slate-800'
             ].join(' ')}
           >
